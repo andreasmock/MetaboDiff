@@ -80,7 +80,7 @@ assay[1:4,1:5]
 ```{r}
 # create colData
 colData = as.data.frame(t(data[1:5,6:ncol(data)]))
-names(colData) = data[5,1:5]
+names(colData) = data[1:5,5]
 rownames(colData) = NULL
 # show input_matrix object
 head(colData)
@@ -91,13 +91,21 @@ head(colData)
 `MetaboDiff` supports all common metabolic IDs as input for the annotation (HMDB, KEGG and ChEBI). The function `get_SMPDBanno` retrieves annotation from the Small Molecule Pathway Database (SMPDB)[^2]. The current build used within `MetaboDiff` is version 2.0 and will be updated as new versions are released. Please refer to the development branch of `MetaboDiff` to work with the latest SMPDB annotation.
 
 ```{r}
-rowData = get_SMPDBanno()
+rowData = get_SMPDBanno(rownames(assay))
+rownames(rowData) = rownames(assay)
+missing_anno = which(is.na(rowData$SMPDB.ID))
 ```
 
+## Create SummarizedExperiment object
+
+```{r}
+met = SummarizedExperiment(assays=assay[-missing_anno,],
+                           rowData=rowData[-missing_anno,],
+                           colData=colData)
+met
+```
 
 # Data preprocessing and quality control
-
-
 
 # Unsupervised analysis
 
