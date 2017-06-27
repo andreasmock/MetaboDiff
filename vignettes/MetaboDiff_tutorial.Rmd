@@ -14,8 +14,11 @@ vignette: >
   %\VignetteEncoding{utf8}
 ---
 
-```{r, include=FALSE}
-library(gdata)
+```{r setup, include=FALSE}
+library("devtools")
+library("gdata")
+library("SummarizedExperiment")
+install_github("andreasmock/MetaboDiff")
 ```
 
 # Introduction
@@ -24,11 +27,11 @@ Comparative metabolomic data analysis comes of age. Although access to a combine
 
 Unlike high-throughput technologies assessing other molecular layers of biology (e.g. sequencing or microarrays for genomics and transcriptomics), open-source computational tools for comparative metabolomics are scarce.
 
-The `MetaboDiff` package enables open-source comparative metabolomic analysis for relative quantifications.
+The `MetaboDiff` package enables open-source comparative metabolomic analysis.
 
 # Installation
 
-MetaboTools can be installed via Bioconductor
+`MetaboDiff` can be installed via Bioconductor
 
 ```{r,eval=FALSE}
 source('http://www.bioconductor.org/biocLite.R')
@@ -37,30 +40,64 @@ biocLite('MetaboDiff')
 
 and once installed loaded by
 
-```{r,eval=FALSE}
-library("MetaboDiff"")
+```{r,eval=FALSE, message=FALSE}
+library("MetaboDiff")
 ```
 
-# Reading example data
+# Reading data and annotation
 
-The minimal vival input file for the `MetaboDiff` package is a table of the form
+## Input files
+To ensure a seamless analysis, the metabolomic data is stored as an `SummarizedExperiment` object [^1]. Hence, the following input object are needed 
 
-HMDB-Identifier  | Sample_1 | Sample_2
-------------- | ------------- | ------------- 
-HMDB00201    | 1.562074   | 0.565305
-HMDB02212       | 1.24377    | 0.669752
+- `assay` - a matrix containing the relative metabolomic measurements with sample IDs as the colnames and metabolite IDs as the rownames (HMDB, KEGG or ChEBI IDs). 
+the Human Metabolome Database (HMDB) IDs as the rownames.
+- `colData` - a dataframe containing the sample metadata.
+- `rowData` - a dataframe containing the metabolite annotation.
 
-where HMDB stands for the Human Metabolome Database (add url). 
+## Example data
 
-```{r, eval=FALSE}
-# read xlsx sheet with Metabolon raw data
-raw = read.xls("http://cancerres.aacrjournals.org/highwire/filestream/291231/field_highwire_adjunct_files/2/132870_2_supp_2886796_nkp7r4.xlsx",sheet=2)
+```{r, eval=TRUE, message=FALSE}
+# read xlsx sheet 
+data = as.matrix(read.xls("http://cancerres.aacrjournals.org/highwire/filestream/291231/field_highwire_adjunct_files/2/132870_2_supp_2886796_nkp7r4.xlsx",sheet=2))
 ```
 
-To ensure a seamless data analysis, we store the data as an `SummarizedExperiment` class [^1].
+### Creation of assay object containing metabolomic data
+
+```{r, eval=TRUE}
+assay = apply(data[6:nrow(data),6:ncol(data)],2,as.numeric)
+# patient IDs as colnames
+colnames(assay) = as.vector(data[1,6:ncol(data)])
+# HMDB-IDs as rownames
+rownames(assay) = data[6:nrow(data),5]
+# remove metabolites with missing HMDB-IDs
+assay = assay[!rownames(assay)=="",]
+# display head of assay
+assay[1:4,1:5]
+```
+
+### Creation of colData object containing sample metadata
+
+```{r}
+# create colData
+colData = as.data.frame(t(data[1:5,6:ncol(data)]))
+names(colData) = data[5,1:5]
+rownames(colData) = NULL
+# show input_matrix object
+head(colData)
+```
+
+### Creation of rowData object contaning metabolite annotation
+
+`MetaboDiff` supports all common metabolic IDs as input for the annotation (HMDB, KEGG and ChEBI). The function `get_SMPDBanno` retrieves annotation from the Small Molecule Pathway Database (SMPDB)[^2]. The current build used within `MetaboDiff` is version 2.0 and will be updated as new versions are released. Please refer to the development branch of `MetaboDiff` to work with the latest SMPDB annotation.
+
+```{r}
+rowData = get_SMPDBanno()
+```
 
 
 # Data preprocessing and quality control
+
+
 
 # Unsupervised analysis
 
@@ -87,6 +124,10 @@ sessionInfo()
 # References
 [^1]: M. Morgan, V. Obenchain, J. Hester, and P. Herv, “Summarizedexperiment: Summarized- experiment container,” R package version, vol. 1.2.3, 2016.
 
-[^2]: T. M. J. Fruchterman and E. M. Reingold, “Graph drawing by force-directed placement,” Software: Practice and Experience, vol. 21, no. 11, pp. 1129–1164, 1991.
+[^2]: Jewison T, Su Y, Disfany FM, et al. SMPDB 2.0: Big Improvements to the Small Molecule Pathway Database Nucleic Acids Res. 2014 Jan;42(Database issue):D478-84.
 
-[^3]: M. Krzywinski, I. Birol, S. J. M. Jones, and M. A. Marra, “Hive plots–rational approach to visualizing networks.,” Briefings in Bioinformatics, vol. 13, pp. 627–644, Sept. 2012.
+[^3]: T. M. J. Fruchterman and E. M. Reingold, “Graph drawing by force-directed placement,” Software: Practice and Experience, vol. 21, no. 11, pp. 1129–1164, 1991.
+
+[^4]: M. Krzywinski, I. Birol, S. J. M. Jones, and M. A. Marra, “Hive plots–rational approach to visualizing networks.,” Briefings in Bioinformatics, vol. 13, pp. 627–644, Sept. 2012.
+
+
