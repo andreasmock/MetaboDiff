@@ -1,0 +1,92 @@
+---
+title: 'MetaboDiff tutorial'
+author: | 
+  | Andreas Mock
+  | Experimental Neurosurgery, Heidelberg University Hospital,
+  | Division of Applied Bioinformatics, German Cancer Research Center (DFKZ) Heidelberg &
+  | Department of Medical Oncology, National Center for Tumor Diseases (NCT) Heidelberg
+date: '`r Sys.Date()`'
+output: BiocStyle::html_document
+fig_caption: yes
+vignette: >
+  %\VignetteIndexEntry{Cancer Variant Explorer (CVE) tutorial}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{utf8}
+---
+
+```{r, include=FALSE}
+library(gdata)
+```
+
+# Introduction
+
+Comparative metabolomic data analysis comes of age. Although access to a combined ultrahigh performance liquid chromatography/tandem mass spectrometry (LC/MC) and gas chromatography/mass spectrometry (GC/MS) pipeline is still limited, an increasing list of commercial vendors offer reproducible high-quality metabolomic data. 
+
+Unlike high-throughput technologies assessing other molecular layers of biology (e.g. sequencing or microarrays for genomics and transcriptomics), open-source computational tools for comparative metabolomics are scarce.
+
+The `MetaboDiff` package enables open-source comparative metabolomic analysis for relative quantifications.
+
+# Installation
+
+MetaboTools can be installed via Bioconductor
+
+```{r,eval=FALSE}
+source('http://www.bioconductor.org/biocLite.R')
+biocLite('MetaboDiff')
+```
+
+and once installed loaded by
+
+```{r,eval=FALSE}
+library("MetaboDiff"")
+```
+
+# Reading example data
+
+The minimal vival input file for the `MetaboDiff` package is a table of the form
+
+HMDB-Identifier  | Sample_1 | Sample_2
+------------- | ------------- | ------------- 
+HMDB00201    | 1.562074   | 0.565305
+HMDB02212       | 1.24377    | 0.669752
+
+where HMDB stands for the Human Metabolome Database (add url). 
+
+```{r, eval=FALSE}
+# read xlsx sheet with Metabolon raw data
+raw = read.xls("http://cancerres.aacrjournals.org/highwire/filestream/291231/field_highwire_adjunct_files/2/132870_2_supp_2886796_nkp7r4.xlsx",sheet=2)
+```
+
+To ensure a seamless data analysis, we store the data as an `SummarizedExperiment` class [^1].
+
+
+# Data preprocessing and quality control
+
+# Unsupervised analysis
+
+# Compartative analysis
+
+# Visualization of metabolic networks
+
+To compare the structure of metabolic networks across tumor entities, network visualizations should ideally be perceptual uniform. However, networks are usually visualized using force-directed layouts (e.g. Fruchterman Reingold[^2]) generating pleasant but hardly interpretable networks earning the nickname ’hairballs’.
+
+## Hive plots
+
+To address this issue, Kryzwinski et al. have developed an algorithm in which nodes are placed on radially oriented linear axes according to a well-defined coordinate system[^3]. In resemblance to the top of a beehive, the authors termed these visualizations hive plots and show that they can be adjusted to suit the purpose, are easily explained and understood and most importantly can generate useful and quantitatively inter- pretable results.
+
+# Differentially abundant subpathways
+
+graph clustering - hotnet2 
+
+# Session information
+
+```{r}
+sessionInfo()
+```
+
+# References
+[^1]: M. Morgan, V. Obenchain, J. Hester, and P. Herv, “Summarizedexperiment: Summarized- experiment container,” R package version, vol. 1.2.3, 2016.
+
+[^2]: T. M. J. Fruchterman and E. M. Reingold, “Graph drawing by force-directed placement,” Software: Practice and Experience, vol. 21, no. 11, pp. 1129–1164, 1991.
+
+[^3]: M. Krzywinski, I. Birol, S. J. M. Jones, and M. A. Marra, “Hive plots–rational approach to visualizing networks.,” Briefings in Bioinformatics, vol. 13, pp. 627–644, Sept. 2012.
