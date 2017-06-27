@@ -8,14 +8,14 @@
 #' get_SMPDBanno(c("15422", "16027"))
 get_SMPDBanno <- function(metabolite_ids) {
     db = read.csv(system.file("extdata", "metabolites.csv", package = "MetaboDiff"))
-    if (length(grep(metabolite_id,pattern = "HMDB"))>0) {
+    if (length(grep(metabolite_ids,pattern = "HMDB"))>0) {
         id_type="HMDB.ID"
     }
-    else if (length(grep(metabolite_id,pattern = "C"))>0) {
+    else if (length(grep(metabolite_ids,pattern = "C"))>0) {
         id_type="KEGG.ID"
     } else {
         id_type="ChEBI.ID"
     }
     which_col = which(colnames(db)==id_type)
-    db[match(metabolite_id,db[,which_col]),]
+    db[match(metabolite_ids,db[,which_col]),]
 }

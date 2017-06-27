@@ -19,6 +19,7 @@ library("devtools")
 library("gdata")
 library("SummarizedExperiment")
 install_github("andreasmock/MetaboDiff")
+library("MetaboDiff")
 ```
 
 # Introduction
