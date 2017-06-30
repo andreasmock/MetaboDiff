@@ -6,16 +6,32 @@
 #' get_SMPDBanno(c("HMDB00538", "HMDB00250"))
 #' get_SMPDBanno(c("C00002", "C00020"))
 #' get_SMPDBanno(c("15422", "16027"))
-get_SMPDBanno <- function(metabolite_ids) {
+#'
+get_SMPDBanno <- function(rowData,
+                          column_kegg_id,
+                          column_hmdb_id,
+                          column_chebi_id) {
     db = read.csv(system.file("extdata", "metabolites.csv", package = "MetaboDiff"))
-    if (length(grep(metabolite_ids,pattern = "HMDB"))>0) {
-        id_type="HMDB.ID"
+    res = matrix(NA,nrow=nrow(rowData),ncol=ncol(db))
+    colnames(res) = colnames(db)
+
+    if(!is.na(column_kegg_id)){
+        temp1 = as.matrix(db[match(rowData[,column_kegg_id],db$KEGG.ID),])
     }
-    else if (length(grep(metabolite_ids,pattern = "C"))>0) {
-        id_type="KEGG.ID"
-    } else {
-        id_type="ChEBI.ID"
+    if(!is.na(column_hmdb_id)){
+        temp2 = as.matrix(db[match(rowData[,column_hmdb_id],db$HMDB.ID),])
     }
-    which_col = which(colnames(db)==id_type)
-    db[match(metabolite_ids,db[,which_col]),]
+    if(!is.na(column_chebi_id)){
+        temp3 = as.matrix(db[match(rowData[,column_chebi_id],db$ChEBI.ID),])
+    }
+    if(exists("temp1")){
+        res[is.na(res[,1]),] = temp1[is.na(res[,1]),]
+    }
+    if(exists("temp2")){
+        res[is.na(res[,1]),] = temp2[is.na(res[,1]),]
+    }
+    if(exists("temp3")){
+        res[is.na(res[,1]),] = temp3[is.na(res[,1]),]
+    }
+    cbind(rowData,res)
 }

@@ -20,23 +20,22 @@ library("gdata")
 library("SummarizedExperiment")
 install_github("andreasmock/MetaboDiff")
 library("MetaboDiff")
+library("tidyverse")
+library("ggfortify")
+library("ComplexHeatmap")
 ```
 
 # Introduction
 
-Comparative metabolomic data analysis comes of age. Although access to a combined ultrahigh performance liquid chromatography/tandem mass spectrometry (LC/MC) and gas chromatography/mass spectrometry (GC/MS) pipeline is still limited, an increasing list of commercial vendors offer reproducible high-quality metabolomic data. 
-
-Unlike high-throughput technologies assessing other molecular layers of biology (e.g. sequencing or microarrays for genomics and transcriptomics), open-source computational tools for comparative metabolomics are scarce.
-
-The `MetaboDiff` package enables open-source comparative metabolomic analysis.
+Comparative metabolomics comes of age by an increasing list of commercial vendors (i.e. Metabolon &reg;) offering reproducible high-quality metabolomic data for translational researchers outside the mass spectrometry field. This R packages aims to provide a low-level entry to differential metabolomic analysis by starting off with the table of relative metabolite quantifications provided by commercial vendors.
 
 # Installation
 
-`MetaboDiff` can be installed via Bioconductor
+The `MetaboDiff` R package can be installed via Github
 
 ```{r,eval=FALSE}
-source('http://www.bioconductor.org/biocLite.R')
-biocLite('MetaboDiff')
+library(devtools)
+install_github("andreasmock/MetaboDiff")
 ```
 
 and once installed loaded by
@@ -47,78 +46,127 @@ library("MetaboDiff")
 
 # Reading data and annotation
 
-## Input files
-To ensure a seamless analysis, the metabolomic data is stored as an `SummarizedExperiment` object [^1]. Hence, the following input object are needed 
+## Example data
 
-- `assay` - a matrix containing the relative metabolomic measurements with sample IDs as the colnames and metabolite IDs as the rownames (HMDB, KEGG or ChEBI IDs). 
-the Human Metabolome Database (HMDB) IDs as the rownames.
+The example data is derived from a study by Priolo and colleagues in which they used the service of the Metabolon&reg; company to compare the tissue metabolome of 40 prostate cancers with 16 normal prostate specimens.[^1] 
+The table summarizing the relative metabolic measurements can be loaded from the journal homepage as follows:
+
+```{r, eval=TRUE, message=FALSE}
+data = as.matrix(read.xls("http://cancerres.aacrjournals.org/highwire/filestream/290852/field_highwire_adjunct_files/4/131853_1_supp_2658512_nbpsn6.xlsx",sheet=5,na.strings = ""))
+```
+
+## Input files
+
+To ensure a seamless analysis, the metabolomic data is stored as an `SummarizedExperiment` object [^2]. Hence, the following input object are needed 
+
+- `assay` - a matrix containing the relative metabolic measurements.
 - `colData` - a dataframe containing the sample metadata.
 - `rowData` - a dataframe containing the metabolite annotation.
 
-## Example data
-
-```{r, eval=TRUE, message=FALSE}
-# read xlsx sheet 
-data = as.matrix(read.xls("http://cancerres.aacrjournals.org/highwire/filestream/291231/field_highwire_adjunct_files/2/132870_2_supp_2886796_nkp7r4.xlsx",sheet=2))
-```
 
 ### Creation of assay object containing metabolomic data
 
 ```{r, eval=TRUE}
-assay = apply(data[6:nrow(data),6:ncol(data)],2,as.numeric)
-# patient IDs as colnames
-colnames(assay) = as.vector(data[1,6:ncol(data)])
-# HMDB-IDs as rownames
-rownames(assay) = data[6:nrow(data),5]
-# remove metabolites with missing HMDB-IDs
-assay = assay[!rownames(assay)=="",]
-# display head of assay
+assay = apply(data[3:nrow(data),8:ncol(data)],2,as.numeric)
 assay[1:4,1:5]
 ```
 
 ### Creation of colData object containing sample metadata
 
 ```{r}
-# create colData
-colData = as.data.frame(t(data[1:5,6:ncol(data)]))
-names(colData) = data[1:5,5]
-rownames(colData) = NULL
-# show input_matrix object
+colData = data.frame(sample_id = colnames(t(data[1,8:ncol(data)])),
+                     tumor_normal = as.vector(t(data[1,8:ncol(data)])))
 head(colData)
 ```
 
-### Creation of rowData object contaning metabolite annotation
+### Creation of rowData object containing metabolite annotations and ids 
 
-`MetaboDiff` supports all common metabolic IDs as input for the annotation (HMDB, KEGG and ChEBI). The function `get_SMPDBanno` retrieves annotation from the Small Molecule Pathway Database (SMPDB)[^2]. The current build used within `MetaboDiff` is version 2.0 and will be updated as new versions are released. Please refer to the development branch of `MetaboDiff` to work with the latest SMPDB annotation.
+For the rowData object we start off with the annotation already provided by the commercial vendor: 
 
 ```{r}
-rowData = get_SMPDBanno(rownames(assay))
-rownames(rowData) = rownames(assay)
-missing_anno = which(is.na(rowData$SMPDB.ID))
+rowData = as.data.frame(data[3:nrow(data),1:7])
+colnames(rowData) = data[2,1:7]
+colnames(rowData)[7] = "HMDB_ID"
+colnames(rowData)
+```
+
+### Annotation using Small Molecular Pathway Database (SMPDB)
+
+Alongside the metabolic measurments, Metabolon &reg; provides metabolite annotation including so called super-pathways and sub-pathways. However, theses annotations might very from vendor to vendor. Hence, the `MetaboDiff` package makes use of the Small Molecular Pathway Database (SMPDB) for metabolite annotation[^3]. `MetaboDiff` supports all common metabolic IDs as input for the annotation (HMDB, KEGG and ChEBI). In the example data, both the KEGG and the HMDB identifier are available. As the databases (HMDB, KEGG or ChEBI) cover unique annotations due to different standards in identifying and reporting metabolites [^4], the function `get_SMPDBanno` queries the database using all three ids (if available) and joins all available information. The current SMPDB build used within `MetaboDiff` is version 2.0 and will be updated as new versions are released. Please refer to the development branch of `MetaboDiff` to work with the latest SMPDB annotation.
+
+```{r}
+rowData = get_SMPDBanno(rowData,
+                        column_kegg_id=6,
+                        column_hmdb_id=7,
+                        column_chebi_id=NA)
 ```
 
 ## Create SummarizedExperiment object
 
 ```{r}
-met = SummarizedExperiment(assays=assay[-missing_anno,],
-                           rowData=rowData[-missing_anno,],
+met = SummarizedExperiment(assays=assay,
+                           rowData=rowData,
                            colData=colData)
 met
 ```
 
+# Imputation of missing values
+
+```{r}
+met_na = is.na(assay(met))*1
+row_na = apply(met_na,1,sum)/nrow(met_na)
+col_na = apply(met_na,2,sum)/ncol(met_na)
+
+rowanno = rowAnnotation(barplot=row_anno_barplot(row_na[order(row_na)],
+                                                 gp=gpar(fill="brown",
+                                                         col="brown"),
+                                                 axis = TRUE),
+                        width=unit(1.5,"cm"))
+colanno = columnAnnotation(barplot=anno_barplot(col_na[order(col_na)],
+                                                 gp=gpar(fill="brown",
+                                                         col="brown")))
+
+ha = Heatmap(matrix = met_na[order(row_na),order(col_na)],
+        name="missing",
+        col=c("lightgrey","brown"),
+        cluster_row = FALSE,
+        cluster_columns = FALSE,
+        column_title = "samples",
+        column_title_side = "bottom",
+        show_column_names = FALSE,
+        heatmap_legend_param = list(labels=c("no","yes")),
+        row_title= "metabolites",
+        bottom_annotation = colanno,
+        bottom_annotation_height = unit(1.5,"cm"))
+ha + rowanno
+```
+
+
 # Data preprocessing and quality control
 
+```{r}
+#reshape data for ggplot2
+mdata = gather(as.tibble(assay(met)[,1:20]))
+ggplot(mdata, mapping=aes(x=key,y=value)) + 
+    geom_boxplot() 
+```
+
 # Unsupervised analysis
+
+```{r}
+autoplot(prcomp(as.tibble(assay(met))))
+```
+
 
 # Compartative analysis
 
 # Visualization of metabolic networks
 
-To compare the structure of metabolic networks across tumor entities, network visualizations should ideally be perceptual uniform. However, networks are usually visualized using force-directed layouts (e.g. Fruchterman Reingold[^2]) generating pleasant but hardly interpretable networks earning the nickname ’hairballs’.
+To compare the structure of metabolic networks across tumor entities, network visualizations should ideally be perceptual uniform. However, networks are usually visualized using force-directed layouts (e.g. Fruchterman Reingold[^3]) generating pleasant but hardly interpretable networks earning the nickname ’hairballs’.
 
 ## Hive plots
 
-To address this issue, Kryzwinski et al. have developed an algorithm in which nodes are placed on radially oriented linear axes according to a well-defined coordinate system[^3]. In resemblance to the top of a beehive, the authors termed these visualizations hive plots and show that they can be adjusted to suit the purpose, are easily explained and understood and most importantly can generate useful and quantitatively inter- pretable results.
+To address this issue, Kryzwinski et al. have developed an algorithm in which nodes are placed on radially oriented linear axes according to a well-defined coordinate system[^4]. In resemblance to the top of a beehive, the authors termed these visualizations hive plots and show that they can be adjusted to suit the purpose, are easily explained and understood and most importantly can generate useful and quantitatively inter- pretable results.
 
 # Differentially abundant subpathways
 
@@ -131,12 +179,16 @@ sessionInfo()
 ```
 
 # References
-[^1]: M. Morgan, V. Obenchain, J. Hester, and P. Herv, “Summarizedexperiment: Summarized- experiment container,” R package version, vol. 1.2.3, 2016.
+[^1]: Priolo, C., Pyne, S., Rose, J., Regan, E. R., Zadra, G., Photopoulos, C., et al. (2014). AKT1 and MYC Induce Distinctive Metabolic Fingerprints in Human Prostate Cancer. Cancer Research, 74(24), 7198–7204. http://doi.org/10.1158/0008-5472.CAN-14-1490
 
-[^2]: Jewison T, Su Y, Disfany FM, et al. SMPDB 2.0: Big Improvements to the Small Molecule Pathway Database Nucleic Acids Res. 2014 Jan;42(Database issue):D478-84.
+[^2]: M. Morgan, V. Obenchain, J. Hester, and P. Herv, “Summarizedexperiment: Summarized- experiment container,” R package version, vol. 1.2.3, 2016.
 
-[^3]: T. M. J. Fruchterman and E. M. Reingold, “Graph drawing by force-directed placement,” Software: Practice and Experience, vol. 21, no. 11, pp. 1129–1164, 1991.
+[^3]: Jewison T, Su Y, Disfany FM, et al. SMPDB 2.0: Big Improvements to the Small Molecule Pathway Database Nucleic Acids Res. 2014 Jan;42(Database issue):D478-84.
 
-[^4]: M. Krzywinski, I. Birol, S. J. M. Jones, and M. A. Marra, “Hive plots–rational approach to visualizing networks.,” Briefings in Bioinformatics, vol. 13, pp. 627–644, Sept. 2012.
+[^4]: Thiele, I., Swainston, N., Fleming, R. M. T., Hoppe, A., Sahoo, S., Aurich, M. K., et al. (2013). A community-driven global reconstruction of human metabolism. Nature Biotechnology, 31(5), 419–425. http://doi.org/10.1038/nbt.2488
+
+[^5]: T. M. J. Fruchterman and E. M. Reingold, “Graph drawing by force-directed placement,” Software: Practice and Experience, vol. 21, no. 11, pp. 1129–1164, 1991.
+
+[^6]: M. Krzywinski, I. Birol, S. J. M. Jones, and M. A. Marra, “Hive plots–rational approach to visualizing networks.,” Briefings in Bioinformatics, vol. 13, pp. 627–644, Sept. 2012.
 
 
