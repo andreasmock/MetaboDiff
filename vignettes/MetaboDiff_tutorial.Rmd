@@ -17,12 +17,14 @@ vignette: >
 ```{r setup, include=FALSE}
 library("devtools")
 library("gdata")
-library("SummarizedExperiment")
+library("MultiAssayExperiment")
 install_github("andreasmock/MetaboDiff")
 library("MetaboDiff")
 library("tidyverse")
 library("ggfortify")
 library("ComplexHeatmap")
+library("impute")
+library("vsn")
 ```
 
 # Introduction
@@ -57,25 +59,32 @@ data = as.matrix(read.xls("http://cancerres.aacrjournals.org/highwire/filestream
 
 ## Input files
 
-To ensure a seamless analysis, the metabolomic data is stored as an `SummarizedExperiment` object [^2]. Hence, the following input object are needed 
+The metabolomic data within `MetaboDiff` is stored as a `MultiAssayExperiment`class [^2]. This framework enables the coordinated representation of multiple experiments on partially overlapping samples with associated metadata and integrated subsetting across experiments. In the context of metabolomic data analysis, multiple assays are needed to store raw data and imputed data (see section on data imputation). 
 
-- `assay` - a matrix containing the relative metabolic measurements.
-- `colData` - a dataframe containing the sample metadata.
-- `rowData` - a dataframe containing the metabolite annotation.
+The core components of the `MultiAssayExperiment` class are:
 
+* `ExperimentList` - a slot of class ExperimentList containing data for each experimental assay. Within the ExperimentList slot, the metabolomic data is stored as a 
+SummarizedExperiment object consisting of:
+    + `assay` - a matrix containing the relative metabolic measurements. 
+    + `rowData` - a dataframe containing the metabolite annotation..
+* `colData` - a slot of class data frame describing the sample metadata available across all experiments
+* `sampleMap` - a slot of class data frame relating clinical data to experimental assay
 
 ### Creation of assay object containing metabolomic data
 
 ```{r, eval=TRUE}
 assay = apply(data[3:nrow(data),8:ncol(data)],2,as.numeric)
+colnames(assay) = paste0(rep("sample",ncol(assay)),1:ncol(assay))
+rownames(assay) = paste0(rep("met",nrow(assay)),1:nrow(assay))
 assay[1:4,1:5]
 ```
 
 ### Creation of colData object containing sample metadata
 
 ```{r}
-colData = data.frame(sample_id = colnames(t(data[1,8:ncol(data)])),
-                     tumor_normal = as.vector(t(data[1,8:ncol(data)])))
+colData = data.frame(id = colnames(t(data[1,8:ncol(data)])),
+                     tumor_normal = as.vector(t(data[1,8:ncol(data)])),
+                   row.names=paste0(rep("pat",ncol(assay)),1:ncol(assay)))
 head(colData)
 ```
 
@@ -87,6 +96,7 @@ For the rowData object we start off with the annotation already provided by the 
 rowData = as.data.frame(data[3:nrow(data),1:7])
 colnames(rowData) = data[2,1:7]
 colnames(rowData)[7] = "HMDB_ID"
+rownames(rowData) = paste0(rep("met",nrow(assay)),1:nrow(assay))
 colnames(rowData)
 ```
 
@@ -101,38 +111,105 @@ rowData = get_SMPDBanno(rowData,
                         column_chebi_id=NA)
 ```
 
-## Create SummarizedExperiment object
+## Creation of SummarizedExperiment object and ExperimentList
 
 ```{r}
-met = SummarizedExperiment(assays=assay,
-                           rowData=rowData,
-                           colData=colData)
+se = SummarizedExperiment(assays=assay,
+                           rowData=rowData)
+experiment_list = list(raw=se)
+experiment_list
+```
+
+## Creation of sampleMap 
+
+```{r}
+sampleMap = data.frame(primary=rownames(colData),
+                 colname=colnames(se))
+sampleMap_list = listToMap(list(raw=sampleMap))
+```
+
+## Construction of MultiAssayExperiment
+
+```{r, message=FALSE}
+met = MultiAssayExperiment(experiments = experiment_list,
+                           colData = colData,
+                           sampleMap = sampleMap_list)
 met
+```
+
+## Extractor functions
+
+```{r,eval=F}
+experiments(met)
+colData(met)
+sampleMap(met)
+colnames(met)
+rownames(met)
 ```
 
 # Imputation of missing values
 
-The function `na_heatmap` visualizes the missing metabolite measurements across the samples:
+In contrast to microarrays, missing values are common in quantitative metabolomic datasets. 
+
+The function `na_heatmap` visualizes the missing metabolite measurements across the samples. Optionally, a sample label can be displayed (e.g. tumor vs. normal) and the color and name specified.
 
 ```{r}
-na_heatmap(met)
+na_heatmap(met,
+           sample_label=colData(met)$tumor_normal,
+           label_colors=c("darkseagreen","dodgerblue"))
 ```
 
+K-nearest neighbour imputation was found ... 40% suggested. Armitage et al., 2015
 
+```{r}
+met = knn_impute(met,cutoff=0.4)
+met
+```
 
-# Data preprocessing and quality control
+# Quality control
 
 ```{r,eval=F}
-#reshape data for ggplot2
-mdata = gather(as.tibble(assay(met)[,1:20]))
-ggplot(mdata, mapping=aes(x=key,y=value)) + 
-    geom_boxplot() 
+#reshape data for ggplot2 using extractor function 
+mdata = as.data.frame(longFormat(met[,,1],colDataCols="tumor_normal"))
+summary(mdata$value)
+ggplot(mdata, 
+       mapping=aes(x=colname,
+                          y=value,
+                          fill=tumor_normal)) + 
+    geom_boxplot() + ylim(0, 75000) + xlab("") +
+    theme(axis.text.x=element_blank()) + ylab("raw abundance value") + scale_fill_manual(values=c("darkseagreen","dodgerblue"))
+```
+
+# Normalization
+
+```{r}
+meanSdPlot(assay(met))
+```
+
+```{r}
+met = normalize_met(met)
+met
+```
+
+```{r}
+meanSdPlot(assays(met)[["norm"]]) 
+```
+
+```{r,eval=F}
+#reshape data for ggplot2 using extractor function 
+mdata = as.data.frame(longFormat(met[,,3],colDataCols="tumor_normal"))
+ggplot(mdata, 
+       mapping=aes(x=colname,
+                          y=value,
+                          fill=tumor_normal)) + 
+    geom_boxplot() + xlab("") +
+    theme(axis.text.x=element_blank()) + ylab("vsn-normalized abundance") + scale_fill_manual(values=c("darkseagreen","dodgerblue"))
 ```
 
 # Unsupervised analysis
 
 ```{r,eval=F}
-autoplot(prcomp(as.tibble(assay(met))))
+autoplot(prcomp(assays(met)[["norm_imputed"]]))
 ```
 
 
@@ -159,7 +236,7 @@ sessionInfo()
 # References
 [^1]: Priolo, C., Pyne, S., Rose, J., Regan, E. R., Zadra, G., Photopoulos, C., et al. (2014). AKT1 and MYC Induce Distinctive Metabolic Fingerprints in Human Prostate Cancer. Cancer Research, 74(24), 7198–7204. http://doi.org/10.1158/0008-5472.CAN-14-1490
 
-[^2]: M. Morgan, V. Obenchain, J. Hester, and P. Herv, “Summarizedexperiment: Summarized- experiment container,” R package version, vol. 1.2.3, 2016.
+[^2]: Sig M (2017). MultiAssayExperiment: Software for the integration of multi-omics experiments in Bioconductor. R package version 1.2.1
 
 [^3]: Jewison T, Su Y, Disfany FM, et al. SMPDB 2.0: Big Improvements to the Small Molecule Pathway Database Nucleic Acids Res. 2014 Jan;42(Database issue):D478-84.
 
