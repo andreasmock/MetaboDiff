@@ -6,7 +6,7 @@ author: |
   | Division of Applied Bioinformatics, German Cancer Research Center (DFKZ) Heidelberg &
   | Department of Medical Oncology, National Center for Tumor Diseases (NCT) Heidelberg
 date: '`r Sys.Date()`'
-output: BiocStyle::html_document
+output: rmarkdown::github_document
 fig_caption: yes
 vignette: >
   %\VignetteIndexEntry{Cancer Variant Explorer (CVE) tutorial}
