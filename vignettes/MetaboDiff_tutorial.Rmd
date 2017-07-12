@@ -8,10 +8,6 @@ author: |
 date: '`r Sys.Date()`'
 output: rmarkdown::github_document
 fig_caption: yes
-vignette: >
-  %\VignetteIndexEntry{Cancer Variant Explorer (CVE) tutorial}
-  %\VignetteEngine{knitr::rmarkdown}
-  %\VignetteEncoding{utf8}
 ---
 
 ```{r setup, include=FALSE}
