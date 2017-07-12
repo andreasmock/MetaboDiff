@@ -1,0 +1,20 @@
+{
+    "collab_server" : "",
+    "contents" : "#' Annotation using Small Molecule Pathway Database (SMPDB)\n#'\n#' @param metabolite_ids vector of HMDB, KEGG or ChEBI identifiers.\n#' @return dataframe containing SMPDB annotation for metabolite identifiers.\n#' @examples\n#' get_SMPDBanno(c(\"HMDB00538\", \"HMDB00250\"))\n#' get_SMPDBanno(c(\"C00002\", \"C00020\"))\n#' get_SMPDBanno(c(\"15422\", \"16027\"))\n#'\nnormalize_met <- function(met) {\n    raw_temp = met[[\"raw\"]]\n    imputed_temp = met[[\"imputed\"]]\n    assay(raw_temp) = justvsn(assay(raw_temp))\n    assay(imputed_temp) = justvsn(assay(imputed_temp))\n\n\n    sampleMap_raw = sampleMap(met)[1:86,]\n    sampleMap_imputed = sampleMap(met)[1:86,]\n\n    sampleMap_raw$assay = droplevels(sampleMap_raw$assay)\n    sampleMap_imputed$assay = droplevels(sampleMap_imputed$assay)\n\n    levels(sampleMap_raw$assay) <- \"norm\"\n    levels(sampleMap_imputed$assay) <- \"norm_imputed\"\n\n    met2 = c(x=met,\n            norm=raw_temp,\n            sampleMap=sampleMap_raw)\n\n    met3 = c(x=met2,\n             norm_imputed=imputed_temp,\n             sampleMap=sampleMap_imputed)\n\n    met3\n}\n\n",
+    "created" : 1499154283871.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "3024208299",
+    "id" : "9A53548B",
+    "lastKnownWriteTime" : 1499157313,
+    "last_content_update" : 1499157313404,
+    "path" : "~/Documents/PhD/MetaboDiff/R/normalize_met.R",
+    "project_path" : "R/normalize_met.R",
+    "properties" : {
+    },
+    "relative_order" : 9,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

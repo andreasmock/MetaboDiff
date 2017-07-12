@@ -1,0 +1,20 @@
+{
+    "collab_server" : "",
+    "contents" : "#' Annotation using Small Molecule Pathway Database (SMPDB)\n#'\n#' @param metabolite_ids vector of HMDB, KEGG or ChEBI identifiers.\n#' @return dataframe containing SMPDB annotation for metabolite identifiers.\n#' @examples\n#' get_SMPDBanno(c(\"HMDB00538\", \"HMDB00250\"))\n#' get_SMPDBanno(c(\"C00002\", \"C00020\"))\n#' get_SMPDBanno(c(\"15422\", \"16027\"))\n#'\n#hiveplot <- function(met) {\n\ncd = rowData(met[[\"norm\"]])\ndf = data.frame(lab1=cd$SUPER_PATHWAY,lab2=cd$SUB_PATHWAY,lab3=cd$BIOCHEMICAL)\nlab0 = paste0(levels(df$lab1),\"|\",\"Metabolome\")\nlab12 = paste0(df$lab1,\"|\",df$lab2)\nlab23 = paste0(df$lab2,\"|\",df$lab3)\ndf2=strsplit(unique(c(lab0,lab12,lab23)),\"[|]\")\nedge_df = data.frame(node1=sapply(df2,\"[\",i=1),node2=sapply(df2,\"[\",i=2))\n\nedge2HPD_mod = function (edge_df= NULL, axis.cols = NULL, type = \"2D\", desc = NULL,\n                         ...){\n    if (is.null(edge_df)) {\n        stop(\"No edge data provided\")\n    }\n    if (!is.data.frame(edge_df)) {\n        stop(\"edge_df is not a data frame\")\n    }\n    lab1 <- unlist(edge_df[, 1])\n    lab1 <- as.character(lab1)\n    lab2 <- unlist(edge_df[, 2])\n    lab2 <- as.character(lab2)\n    nn <- length(unique(c(lab1, lab2)))\n    size <- rep(1, nn)\n    id <- 1:nn\n    axis <- rep(1, nn)\n    color <- as.character(rep(\"black\", nn))\n    radius <- rep(1, nn)\n    HPD <- list()\n    HPD$nodes$id <- id\n    HPD$nodes$lab <- unique(c(lab1, lab2))\n    HPD$nodes$axis <- axis\n    HPD$nodes$radius <- radius\n    HPD$nodes$size <- size\n    HPD$nodes$color <- color\n    ne <- nrow(edge_df)\n    edge_df[, 1] <- as.character(edge_df[, 1])\n    edge_df[, 2] <- as.character(edge_df[, 2])\n    HPD$edges$id1 <- rep(NA, ne)\n    HPD$edges$id2 <- rep(NA, ne)\n    for (n in 1:ne) {\n        pat1 <- paste(\"\", edge_df[n, 1], \"\", sep = \"\")\n        pat2 <- paste(\"\", edge_df[n, 2], \"\", sep = \"\")\n        HPD$edges$id1[n] <- which(HPD$nodes$lab==pat1)\n        HPD$edges$id2[n] <- which(HPD$nodes$lab==pat2)\n    }\n    if (ncol(edge_df) > 2) {\n        if (is.numeric(edge_df[, 3]) | is.integer(edge_df[, 3])) {\n            edge_weight <- edge_df[, 3]\n        }\n        else {\n            warning(\"No edge weight column detected. Setting default edge weight to 1\")\n            edge_weight <- rep(1, ne)\n        }\n    }\n    HPD$edges$weight <- edge_weight\n    HPD$edges$color <- rep(\"gray\", ne)\n    HPD$nodes <- as.data.frame(HPD$nodes)\n    HPD$edges <- as.data.frame(HPD$edges)\n    if (is.null(desc)) {\n        desc <- \"No description provided\"\n    }\n    HPD$desc <- desc\n    if (is.null(axis.cols)) {\n        axis.cols <- brewer.pal(length(unique(HPD$nodes$axis)),\n                                \"Set1\")\n    }\n    HPD$axis.cols <- axis.cols\n    HPD$nodes$axis <- as.integer(HPD$nodes$axis)\n    HPD$nodes$size <- as.numeric(HPD$nodes$size)\n    HPD$nodes$color <- as.character(HPD$nodes$color)\n    HPD$nodes$lab <- as.character(HPD$nodes$lab)\n    HPD$nodes$id <- as.integer(HPD$nodes$id)\n    HPD$edges$id1 <- as.integer(HPD$edges$id1)\n    HPD$edges$id2 <- as.integer(HPD$edges$id2)\n    HPD$edges$weight <- as.numeric(HPD$edges$weight)\n    HPD$edges$color <- as.character(HPD$edges$color)\n    HPD$type <- type\n    class(HPD) <- \"HivePlotData\"\n    chkHPD(HPD)\n    return(HPD)\n}\n\nhive1 = edge2HPD_mod(edge_df,desc = \"Test\",axis.cols=\"red\")\n\nhive2 <- mineHPD(hive1, option = \"rad <- tot.edge.count\")\nsumHPD(hive2)\n\nhive3 <- mineHPD(hive2, option = \"axis <- source.man.sink\")\nsumHPD(hive3, chk.all = TRUE)\n\nplotHive(hive3,bkgnd=\"white\")\n\n#}\n\n",
+    "created" : 1499435116177.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "20|30|90|0|\n",
+    "hash" : "651985107",
+    "id" : "9DEE1FB5",
+    "lastKnownWriteTime" : 1499440780,
+    "last_content_update" : 1499440920577,
+    "path" : "~/Documents/PhD/MetaboDiff/R/hive_plot.R",
+    "project_path" : "R/hive_plot.R",
+    "properties" : {
+    },
+    "relative_order" : 10,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

@@ -1,0 +1,21 @@
+{
+    "collab_server" : "",
+    "contents" : "#' Heatmap to visualize missing metabolites across the samples\n#'\n#' @param metabolite_ids vector of HMDB, KEGG or ChEBI identifiers.\n#' @return dataframe containing SMPDB annotation for metabolite identifiers.\n#' @examples\n#' get_SMPDBanno(c(\"HMDB00538\", \"HMDB00250\"))\n#' get_SMPDBanno(c(\"C00002\", \"C00020\"))\n#' get_SMPDBanno(c(\"15422\", \"16027\"))\n#'\nna_heatmap = function(met, sample_label, label_colors) {\n    met_na = is.na(assay(met))*1\n    row_na = apply(met_na,1,sum)/ncol(met_na)\n    col_na = apply(met_na,2,sum)/nrow(met_na)\n    if(missing(sample_label)&missing(label_colors)){\n        colanno = columnAnnotation(barplot=anno_barplot(col_na[order(col_na)],\n                                                        gp=gpar(fill=\"brown\",\n                                                                col=\"brown\"),\n                                                        axis=TRUE,\n                                                        border=FALSE))\n    } else {\n        col_list = list(grouping=label_colors)\n        names(col_list$grouping)=levels(sample_label)\n        colanno = columnAnnotation(df=data.frame(grouping=sample_label),\n                                   col=col_list,\n                                   barplot=anno_barplot(col_na[order(col_na)],\n                                                        gp=gpar(fill=\"brown\",\n                                                                col=\"brown\"),\n                                                        axis=TRUE,\n                                                        border=FALSE))\n    }\n\n    rowanno = rowAnnotation(barplot=row_anno_barplot(row_na[order(row_na)],\n                                                     gp=gpar(fill=\"brown\",\n                                                             col=\"brown\"),\n                                                     axis = TRUE,\n                                                     border=FALSE),\n                            width=unit(1.5,\"cm\"))\n\n\n    ha = Heatmap(matrix = met_na[order(row_na),order(col_na)],\n                 name=\"missing\",\n                 col=c(\"lightgrey\",\"brown\"),\n                 cluster_row = FALSE,\n                 cluster_columns = FALSE,\n                 column_title = \"samples\",\n                 column_title_side = \"bottom\",\n                 show_column_names = FALSE,\n                 show_row_names = FALSE,\n                 heatmap_legend_param = list(labels=c(\"no\",\"yes\")),\n                 row_title= \"metabolites\",\n                 bottom_annotation = colanno,\n                 bottom_annotation_height = unit(1.5,\"cm\"))\n    ha + rowanno\n}\n",
+    "created" : 1498830173068.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "2470723696",
+    "id" : "663C6F76",
+    "lastKnownWriteTime" : 1499089925,
+    "last_content_update" : 1499089925361,
+    "path" : "~/Documents/PhD/MetaboDiff/R/na_heatmap.R",
+    "project_path" : "R/na_heatmap.R",
+    "properties" : {
+        "tempName" : "Untitled1"
+    },
+    "relative_order" : 6,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}
