@@ -18,18 +18,25 @@ vignette: >
 library("devtools")
 library("gdata")
 library("MultiAssayExperiment")
-install_github("andreasmock/MetaboDiff")
+library("SummarizedExperiment")
 library("MetaboDiff")
 library("tidyverse")
 library("ggfortify")
 library("ComplexHeatmap")
 library("impute")
 library("vsn")
+library("HiveR")
+library("RColorBrewer")
+library("plyr")
+
+install_github("andreasmock/MetaboDiff")
 ```
 
 # Introduction
 
-Comparative metabolomics comes of age by an increasing list of commercial vendors (i.e. Metabolon &reg;) offering reproducible high-quality metabolomic data for translational researchers outside the mass spectrometry field. This R packages aims to provide a low-level entry to differential metabolomic analysis by starting off with the table of relative metabolite quantifications provided by commercial vendors.
+Comparative metabolomics comes of age by an increasing number of commercial vendors (i.e. Metabolon &reg;) offering reproducible high-quality metabolomic data for translational researchers outside the mass spectrometry field. This R packages aims to provide a low-level entry to differential metabolomic analysis by starting off with the table of relative metabolite quantifications provided by commercial vendors.
+
+ds
 
 # Installation
 
@@ -137,16 +144,6 @@ met = MultiAssayExperiment(experiments = experiment_list,
 met
 ```
 
-## Extractor functions
-
-```{r,eval=F}
-experiments(met)
-colData(met)
-sampleMap(met)
-colnames(met)
-rownames(met)
-```
-
 # Imputation of missing values
 
 In contrast to microarrays, missing values are common in quantitative metabolomic datasets. 
@@ -168,52 +165,108 @@ met
 
 # Quality control
 
-```{r,eval=F}
+```{r}
 #reshape data for ggplot2 using extractor function 
 mdata = as.data.frame(longFormat(met[,,1],colDataCols="tumor_normal"))
-summary(mdata$value)
+mdata$value = log2(mdata$value)
 ggplot(mdata, 
        mapping=aes(x=colname,
                           y=value,
                           fill=tumor_normal)) + 
-    geom_boxplot() + ylim(0, 75000) + xlab("") +
-    theme(axis.text.x=element_blank()) + ylab("raw abundance value") + scale_fill_manual(values=c("darkseagreen","dodgerblue"))
+    geom_boxplot() + xlab("") +
+    theme(axis.text.x=element_blank()) + ylab("log2(raw abundance)") + scale_fill_manual(values=c("darkseagreen","dodgerblue"))
 ```
 
 # Normalization
-
-```{r}
-meanSdPlot(assay(met))
-```
 
 ```{r}
 met = normalize_met(met)
 met
 ```
 
-```{r}
-meanSdPlot(assays(met)[["norm"]]) 
-```
-
 ```{r,eval=F}
 #reshape data for ggplot2 using extractor function 
 mdata = as.data.frame(longFormat(met[,,3],colDataCols="tumor_normal"))
+mdata$value = scale(mdata$value,scale=FALSE)
 ggplot(mdata, 
        mapping=aes(x=colname,
                           y=value,
                           fill=tumor_normal)) + 
     geom_boxplot() + xlab("") +
-    theme(axis.text.x=element_blank()) + ylab("vsn-normalized abundance") + scale_fill_manual(values=c("darkseagreen","dodgerblue"))
+    theme(axis.text.x=element_blank()) + ylab("log2(vsn-normalized abundance)") + scale_fill_manual(values=c("darkseagreen","dodgerblue"))
 ```
+
+# Removal of outliers
+
+```{r}
+col_list = list(grouping=c("darkseagreen","dodgerblue"))
+        names(col_list$grouping)=c("N","T")
+        met_na = is.na(assay(met))*1
+         col_na = apply(met_na,2,sum)/nrow(met_na)
+        colanno = columnAnnotation(df=data.frame(grouping=colData$tumor_normal),
+                                   col=col_list,
+                                   barplot=anno_barplot(col_na[order(col_na)],
+                                                        gp=gpar(fill="brown",
+                                                                col="brown"),
+                                                        axis=TRUE,
+                                                        border=FALSE))
+        
+        
+Heatmap(cor(scale(assays(met)[["norm_imputed"]],scale=FALSE)),
+        show_column_names = FALSE,
+                 show_row_names = FALSE,
+        top_annotation = colanno) 
+```
+
+Cuttree
+
+```{r}
+
+```
+
 
 # Unsupervised analysis
 
-```{r,eval=F}
-autoplot(prcomp(assays(met)[["norm_imputed"]]))
+```{r}
+autoplot(prcomp(t(assays(met)[["norm_imputed"]]),center = TRUE,scale = FALSE),
+         data=as.data.frame(colData(met)),
+         colour="tumor_normal")
 ```
 
 
-# Compartative analysis
+
+# Comparative analysis
+
+# Variance 
+
+```{r}
+df = data.frame(sd=apply(assays(met)[[3]],1,sd,na.rm=TRUE),
+                smpdb_pathway=rowData(met[["norm"]])$Pathway.Name,
+                super_pathway = rowData(met[["norm"]])$SUPER_PATHWAY)
+```
+
+```{r}
+sd_order=ddply(df,"super_pathway",function(df) median(df$sd,na.rm=TRUE))
+
+df$super_pathway = factor(df$super_pathway,
+                          levels=sd_order$super_pathway[order(sd_order$V1,decreasing=TRUE)])
+
+ggplot(df, aes(x=super_pathway,y=sd,fill=super_pathway)) + geom_boxplot() + coord_flip() + guides(fill=FALSE)
+```
+
+```{r}
+sd_order=ddply(df,"smpdb_pathway",function(df) median(df$sd,na.rm=TRUE))
+
+df$smpdb_pathway = factor(df$smpdb_pathway,
+                          levels=sd_order$smpdb_pathway[order(sd_order$V1,decreasing=TRUE)])
+
+ggplot(df, aes(x=smpdb_pathway,y=sd,fill=smpdb_pathway)) + geom_boxplot() + coord_flip() + guides(fill=FALSE)
+```
+
+```{r}
+Heatmap(cor(t(assays(met)[["norm_imputed"]])))
+```
+
 
 # Visualization of metabolic networks
 

@@ -1,0 +1,64 @@
+---
+title: 'MetaboAtlas build'
+author: | 
+  | Andreas Mock
+  | Experimental Neurosurgery, Heidelberg University Hospital,
+  | Division of Applied Bioinformatics, German Cancer Research Center (DFKZ) Heidelberg &
+  | Department of Medical Oncology, National Center for Tumor Diseases (NCT) Heidelberg
+date: '`r Sys.Date()`'
+output: BiocStyle::html_document
+fig_caption: yes
+vignette: >
+  %\VignetteIndexEntry{Cancer Variant Explorer (CVE) tutorial}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{utf8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library("gdata")
+library("MetaboDiff")
+library("MultiAssayExperiment")
+library("SummarizedExperiment")
+```
+
+## Dataset 1: Priolo et al., 2014 | Prostate cancer
+
+```{r}
+data = as.matrix(read.xls("http://cancerres.aacrjournals.org/highwire/filestream/290852/field_highwire_adjunct_files/4/131853_1_supp_2658512_nbpsn6.xlsx",sheet=5,na.strings = ""))
+assay = apply(data[3:nrow(data),8:ncol(data)],2,as.numeric)
+colnames(assay) = paste0(rep("sample",ncol(assay)),1:ncol(assay))
+rownames(assay) = paste0(rep("met",nrow(assay)),1:nrow(assay))
+assay[1:4,1:5]
+colData = data.frame(id = colnames(t(data[1,8:ncol(data)])),
+                     tumor_normal = as.vector(t(data[1,8:ncol(data)])),
+                   row.names=paste0(rep("pat",ncol(assay)),1:ncol(assay)))
+head(colData)
+rowData = as.data.frame(data[3:nrow(data),1:7])
+colnames(rowData) = data[2,1:7]
+colnames(rowData)[7] = "HMDB_ID"
+rownames(rowData) = paste0(rep("met",nrow(assay)),1:nrow(assay))
+colnames(rowData)
+rowData = get_SMPDBanno(rowData,
+                        column_kegg_id=6,
+                        column_hmdb_id=7,
+                        column_chebi_id=NA)
+se = SummarizedExperiment(assays=assay,
+                           rowData=rowData)
+experiment_list = list(Priolo2014=se)
+experiment_list
+sampleMap = data.frame(primary=rownames(colData),
+                 colname=colnames(se))
+sampleMap_list = listToMap(list(Priolo2014=sampleMap))
+ds1 = MultiAssayExperiment(experiments = experiment_list,
+                           colData = colData,
+                           sampleMap = sampleMap_list)
+ds1
+```
+
+## Dataset 2: Wettersten et al., 2015 | RCC
+
+```{r}
+
+```
+
