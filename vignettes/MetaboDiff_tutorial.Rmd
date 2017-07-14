@@ -6,7 +6,10 @@ author: |
   | Division of Applied Bioinformatics, German Cancer Research Center (DFKZ) Heidelberg &
   | Department of Medical Oncology, National Center for Tumor Diseases (NCT) Heidelberg
 date: '`r Sys.Date()`'
-output: rmarkdown::github_document
+output:
+  github_document:
+    toc: true
+    toc_depth: 2
 fig_caption: yes
 ---
 
@@ -24,15 +27,15 @@ library("vsn")
 library("HiveR")
 library("RColorBrewer")
 library("plyr")
-
+library("cowplot")
+library("cluster")
+library("factoextra")
 install_github("andreasmock/MetaboDiff")
 ```
 
 # Introduction
 
-Comparative metabolomics comes of age by an increasing number of commercial vendors (i.e. Metabolon &reg;) offering reproducible high-quality metabolomic data for translational researchers outside the mass spectrometry field. This R packages aims to provide a low-level entry to differential metabolomic analysis by starting off with the table of relative metabolite quantifications provided by commercial vendors.
-
-ds
+Comparative non-targeted metabolomics comes of age through an increasing number of commercial vendors offering reproducible high-quality metabolomic data for translational researchers outside the mass spectrometry field. This R packages aims to provide a low-level entry to differential metabolomic analysis by starting off with the table of relative metabolite quantifications provided by commercial vendors or core facilities. 
 
 # Installation
 
@@ -49,20 +52,22 @@ and once installed loaded by
 library("MetaboDiff")
 ```
 
-# Reading data and annotation
+# Part I: Data processing
 
-## Example data
+## Reading data and annotation
 
-The example data is derived from a study by Priolo and colleagues in which they used the service of the Metabolon&reg; company to compare the tissue metabolome of 40 prostate cancers with 16 normal prostate specimens.[^1] 
+### Example data
+
+The example data is derived from a study by Priolo and colleagues in which they used the service of Metabolon&reg; to compare the tissue metabolome of 40 prostate cancers with 16 normal prostate specimens.[^1] 
 The table summarizing the relative metabolic measurements can be loaded from the journal homepage as follows:
 
 ```{r, eval=TRUE, message=FALSE}
 data = as.matrix(read.xls("http://cancerres.aacrjournals.org/highwire/filestream/290852/field_highwire_adjunct_files/4/131853_1_supp_2658512_nbpsn6.xlsx",sheet=5,na.strings = ""))
 ```
 
-## Input files
+### Input files
 
-The metabolomic data within `MetaboDiff` is stored as a `MultiAssayExperiment`class [^2]. This framework enables the coordinated representation of multiple experiments on partially overlapping samples with associated metadata and integrated subsetting across experiments. In the context of metabolomic data analysis, multiple assays are needed to store raw data and imputed data (see section on data imputation). 
+The metabolomic data within `MetaboDiff` is stored as a `MultiAssayExperiment`class [^2]. This framework enables the coordinated representation of multiple experiments on partially overlapping samples with associated metadata and integrated subsetting across experiments. In the context of metabolomic data analysis, multiple assays are needed to store raw data and imputed data which usually contain different number of metabolites due to missing values (see section on data imputation for more details). 
 
 The core components of the `MultiAssayExperiment` class are:
 
@@ -73,7 +78,7 @@ SummarizedExperiment object consisting of:
 * `colData` - a slot of class data frame describing the sample metadata available across all experiments
 * `sampleMap` - a slot of class data frame relating clinical data to experimental assay
 
-### Creation of assay object containing metabolomic data
+#### Creation of assay object containing metabolomic data
 
 ```{r, eval=TRUE}
 assay = apply(data[3:nrow(data),8:ncol(data)],2,as.numeric)
@@ -82,7 +87,7 @@ rownames(assay) = paste0(rep("met",nrow(assay)),1:nrow(assay))
 assay[1:4,1:5]
 ```
 
-### Creation of colData object containing sample metadata
+#### Creation of colData object containing sample metadata
 
 ```{r}
 colData = data.frame(id = colnames(t(data[1,8:ncol(data)])),
@@ -91,7 +96,7 @@ colData = data.frame(id = colnames(t(data[1,8:ncol(data)])),
 head(colData)
 ```
 
-### Creation of rowData object containing metabolite annotations and ids 
+#### Creation of rowData object containing metabolite annotations and ids 
 
 For the rowData object we start off with the annotation already provided by the commercial vendor: 
 
@@ -103,9 +108,9 @@ rownames(rowData) = paste0(rep("met",nrow(assay)),1:nrow(assay))
 colnames(rowData)
 ```
 
-### Annotation using Small Molecular Pathway Database (SMPDB)
+#### Annotation using Small Molecular Pathway Database (SMPDB)
 
-Alongside the metabolic measurments, Metabolon &reg; provides metabolite annotation including so called super-pathways and sub-pathways. However, theses annotations might very from vendor to vendor. Hence, the `MetaboDiff` package makes use of the Small Molecular Pathway Database (SMPDB) for metabolite annotation[^3]. `MetaboDiff` supports all common metabolic IDs as input for the annotation (HMDB, KEGG and ChEBI). In the example data, both the KEGG and the HMDB identifier are available. As the databases (HMDB, KEGG or ChEBI) cover unique annotations due to different standards in identifying and reporting metabolites [^4], the function `get_SMPDBanno` queries the database using all three ids (if available) and joins all available information. The current SMPDB build used within `MetaboDiff` is version 2.0 and will be updated as new versions are released. Please refer to the development branch of `MetaboDiff` to work with the latest SMPDB annotation.
+Alongside the metabolic measurements, Metabolon &reg; provides metabolite annotation including so called super-pathways and sub-pathways. However, theses annotations might very from vendor to vendor. Hence, the `MetaboDiff` package makes use of the Small Molecular Pathway Database (SMPDB) for metabolite annotation[^3]. `MetaboDiff` supports all common metabolic IDs as input for the annotation (HMDB, KEGG and ChEBI). In the example data, both the KEGG and the HMDB identifier are available. As the databases (HMDB, KEGG or ChEBI) cover unique annotations due to different standards in identifying and reporting metabolites [^4], the function `get_SMPDBanno` queries the database using all three ids (if available) and joins all available information. The current SMPDB build used within `MetaboDiff` is version 2.0 and will be updated as new versions are released. Please refer to the development branch of `MetaboDiff` to work with the latest SMPDB annotation.
 
 ```{r}
 rowData = get_SMPDBanno(rowData,
@@ -114,7 +119,7 @@ rowData = get_SMPDBanno(rowData,
                         column_chebi_id=NA)
 ```
 
-## Creation of SummarizedExperiment object and ExperimentList
+### Creation of SummarizedExperiment object and ExperimentList
 
 ```{r}
 se = SummarizedExperiment(assays=assay,
@@ -123,7 +128,7 @@ experiment_list = list(raw=se)
 experiment_list
 ```
 
-## Creation of sampleMap 
+### Creation of sampleMap 
 
 ```{r}
 sampleMap = data.frame(primary=rownames(colData),
@@ -131,7 +136,7 @@ sampleMap = data.frame(primary=rownames(colData),
 sampleMap_list = listToMap(list(raw=sampleMap))
 ```
 
-## Construction of MultiAssayExperiment
+### Construction of MultiAssayExperiment
 
 ```{r, message=FALSE}
 met = MultiAssayExperiment(experiments = experiment_list,
@@ -140,88 +145,80 @@ met = MultiAssayExperiment(experiments = experiment_list,
 met
 ```
 
-# Imputation of missing values
+## Imputation of missing values
 
-In contrast to microarrays, missing values are common in quantitative metabolomic datasets. 
+In contrast to other high-throughput technologies, missing values are common in quantitative metabolomic datasets. 
 
-The function `na_heatmap` visualizes the missing metabolite measurements across the samples. Optionally, a sample label can be displayed (e.g. tumor vs. normal) and the color and name specified.
+The function `na_heatmap` visualizes the missing metabolite measurements across the samples. A vector of sample labels (e.g. tumor vs. normal) and the color of the sample levels needs to be specified.
 
 ```{r}
 na_heatmap(met,
-           sample_label=colData(met)$tumor_normal,
+           sample_labels=colData(met)$tumor_normal,
            label_colors=c("darkseagreen","dodgerblue"))
 ```
 
-K-nearest neighbour imputation was found ... 40% suggested. Armitage et al., 2015
+The example data supports the need for data imputation. It could be shown that k-nearest neighbor imputation minimizes the effects on the normality and variance of the data as long as the number of missing data does not exceed 40% [^5]. 
+
+The function 'knn_impute' adds the slot "impute" to the MultiAssayExperiment object that contains the imputed relative metabolite measurements for all metabolites with raw measurements in more than 60% of cases. We recommend a cutoff of 40% (i.e. 0.4). However the cutoff might be changed according to the discretion of the user.
 
 ```{r}
 met = knn_impute(met,cutoff=0.4)
 met
 ```
 
-# Quality control
+As apparent form the summary description of the object 'met' the imputed data matrix contains only 238 of the 307 original metabolites according the cutoff of 40% missing values.
+
+## Removal of outliers
+
+Before we normalize the data, we want to exclude outliers in the study set. To this end, we provide the function `outlier_heatmap`.
+The sample annotation shows the number of missing metabolites per sample as the proxy of the impact of imputation on clustering. 
+To showcase outliers, the hierarchical clustering tree is cut in 2 clusters.
 
 ```{r}
-#reshape data for ggplot2 using extractor function 
-mdata = as.data.frame(longFormat(met[,,1],colDataCols="tumor_normal"))
-mdata$value = log2(mdata$value)
-ggplot(mdata, 
-       mapping=aes(x=colname,
-                          y=value,
-                          fill=tumor_normal)) + 
-    geom_boxplot() + xlab("") +
-    theme(axis.text.x=element_blank()) + ylab("log2(raw abundance)") + scale_fill_manual(values=c("darkseagreen","dodgerblue"))
+outlier_heatmap(met,
+                sample_labels=colData(met)$tumor_normal,
+                label_colors=c("darkseagreen","dodgerblue"))
 ```
 
-# Normalization
+The imputed data of the example study set displays a cluster of 5 samples (cluster 1) with an in average lower relative metabolite abundance. Due to the lack of batch information, this cannot be investigted further at this time. To demonstrate, how a cluster can be removed, we apply the function `remove_cluster` to remove cluster 1:
 
 ```{r}
-met = normalize_met(met)
+met = remove_cluster(met,cluster=1)
 met
 ```
 
-```{r,eval=F}
-#reshape data for ggplot2 using extractor function 
-mdata = as.data.frame(longFormat(met[,,3],colDataCols="tumor_normal"))
-mdata$value = scale(mdata$value,scale=FALSE)
-ggplot(mdata, 
-       mapping=aes(x=colname,
-                          y=value,
-                          fill=tumor_normal)) + 
-    geom_boxplot() + xlab("") +
-    theme(axis.text.x=element_blank()) + ylab("log2(vsn-normalized abundance)") + scale_fill_manual(values=c("darkseagreen","dodgerblue"))
-```
+As displayed in the summary of the `met` object, the 5 samples of cluster 1 were successfully removed from the slots "raw" and "imputed".
 
-# Removal of outliers
+## Normalization
+
+Variance stabilizing normalization (vsn) is used ensure that the variance remains nearly constant over the measured spectrum (Huber et al., 2002).
 
 ```{r}
-col_list = list(grouping=c("darkseagreen","dodgerblue"))
-        names(col_list$grouping)=c("N","T")
-        met_na = is.na(assay(met))*1
-         col_na = apply(met_na,2,sum)/nrow(met_na)
-        colanno = columnAnnotation(df=data.frame(grouping=colData$tumor_normal),
-                                   col=col_list,
-                                   barplot=anno_barplot(col_na[order(col_na)],
-                                                        gp=gpar(fill="brown",
-                                                                col="brown"),
-                                                        axis=TRUE,
-                                                        border=FALSE))
-        
-        
-Heatmap(cor(scale(assays(met)[["norm_imputed"]],scale=FALSE)),
-        show_column_names = FALSE,
-                 show_row_names = FALSE,
-        top_annotation = colanno) 
+met = normalize_met(met)
 ```
 
-Cuttree
+## Summary of processed object
 
 ```{r}
-
+met
 ```
 
+At this point the data processing is completed. The `MultiAssayExperiment` object contains now 4 slots:
 
-# Unsupervised analysis
+- raw - raw relative metabolic measurements as provided by company or core facility
+- imputed - imputed relative metabolic measurements (k-nearest neighbor imputation)
+- norm - normalized relative metabolic measurements (vsn)
+- norm_imputed - normalized imputed relative metabolic measurements (vsn)
+
+## Quality control of normalization
+
+```{r,fig.width=10,fig.height=8, message=FALSE}
+quality_plot(met)
+```
+
+# Part II: Data analysis
+
+## Unsupervised analysis
 
 ```{r}
 autoplot(prcomp(t(assays(met)[["norm_imputed"]]),center = TRUE,scale = FALSE),
@@ -231,9 +228,9 @@ autoplot(prcomp(t(assays(met)[["norm_imputed"]]),center = TRUE,scale = FALSE),
 
 
 
-# Comparative analysis
+## Comparative analysis
 
-# Variance 
+## Variance 
 
 ```{r}
 df = data.frame(sd=apply(assays(met)[[3]],1,sd,na.rm=TRUE),
@@ -264,15 +261,15 @@ Heatmap(cor(t(assays(met)[["norm_imputed"]])))
 ```
 
 
-# Visualization of metabolic networks
+## Visualization of metabolic networks
 
-To compare the structure of metabolic networks across tumor entities, network visualizations should ideally be perceptual uniform. However, networks are usually visualized using force-directed layouts (e.g. Fruchterman Reingold[^3]) generating pleasant but hardly interpretable networks earning the nickname ’hairballs’.
+To compare the structure of metabolic networks across tumor entities, network visualizations should ideally be perceptual uniform. However, networks are usually visualized using force-directed layouts (e.g. Fruchterman Reingold[^6]) generating pleasant but hardly interpretable networks earning the nickname ’hairballs’.
 
-## Hive plots
+### Hive plots
 
-To address this issue, Kryzwinski et al. have developed an algorithm in which nodes are placed on radially oriented linear axes according to a well-defined coordinate system[^4]. In resemblance to the top of a beehive, the authors termed these visualizations hive plots and show that they can be adjusted to suit the purpose, are easily explained and understood and most importantly can generate useful and quantitatively inter- pretable results.
+To address this issue, Kryzwinski et al. have developed an algorithm in which nodes are placed on radially oriented linear axes according to a well-defined coordinate system[^7]. In resemblance to the top of a beehive, the authors termed these visualizations hive plots and show that they can be adjusted to suit the purpose, are easily explained and understood and most importantly can generate useful and quantitatively inter- pretable results.
 
-# Differentially abundant subpathways
+## Differentially abundant subpathways
 
 graph clustering - hotnet2 
 
@@ -291,8 +288,10 @@ sessionInfo()
 
 [^4]: Thiele, I., Swainston, N., Fleming, R. M. T., Hoppe, A., Sahoo, S., Aurich, M. K., et al. (2013). A community-driven global reconstruction of human metabolism. Nature Biotechnology, 31(5), 419–425. http://doi.org/10.1038/nbt.2488
 
-[^5]: T. M. J. Fruchterman and E. M. Reingold, “Graph drawing by force-directed placement,” Software: Practice and Experience, vol. 21, no. 11, pp. 1129–1164, 1991.
+[^5]: Armitage, E. G., Godzien, J., Alonso-Herranz, V., L pez-Gonz lvez, N., & Barbas, C. (2015). Missing value imputation strategies for metabolomics data. Electrophoresis, 36(24), 3050–3060. http://doi.org/10.1002/elps.201500352
 
-[^6]: M. Krzywinski, I. Birol, S. J. M. Jones, and M. A. Marra, “Hive plots–rational approach to visualizing networks.,” Briefings in Bioinformatics, vol. 13, pp. 627–644, Sept. 2012.
+[^6]: T. M. J. Fruchterman and E. M. Reingold, “Graph drawing by force-directed placement,” Software: Practice and Experience, vol. 21, no. 11, pp. 1129–1164, 1991.
+
+[^7]: M. Krzywinski, I. Birol, S. J. M. Jones, and M. A. Marra, “Hive plots–rational approach to visualizing networks.,” Briefings in Bioinformatics, vol. 13, pp. 627–644, Sept. 2012.
 
 
