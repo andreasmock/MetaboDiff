@@ -15,7 +15,7 @@ outlier_heatmap = function(met, sample_labels,label_colors) {
     col_list = list(grouping=label_colors,cluster=c("black","grey"))
     names(col_list$grouping)=levels(sample_labels)
     names(col_list$cluster)=c(1,2)
-    rowanno = columnAnnotation(df=data.frame(grouping=colData$tumor_normal,cluster=as.vector(clusters)),
+    rowanno = columnAnnotation(df=data.frame(grouping=colData(met)$tumor_normal,cluster=as.vector(clusters)),
                                col=col_list,
                                missing_metabolites=anno_barplot(col_na[order(col_na)],
                                                     gp=gpar(fill="brown",

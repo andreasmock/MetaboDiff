@@ -30,6 +30,7 @@ library("cowplot")
 library("cluster")
 library("factoextra")
 install_github("andreasmock/MetaboDiff")
+library("MetaboDiff")
 ```
 
 # Introduction
