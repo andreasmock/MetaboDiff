@@ -167,6 +167,33 @@ met
 ```
 
 As apparent form the summary description of the object 'met' the imputed data matrix contains only 238 of the 307 original metabolites according the cutoff of 40% missing values.
+<<<<<<< HEAD
+
+## Removal of outliers
+
+Before we normalize the data, we want to exclude outliers in the study set. To this end, we provide the function `outlier_heatmap`.
+The sample annotation shows the number of missing metabolites per sample as the proxy of the impact of imputation on clustering. 
+To showcase outliers, the hierarchical clustering tree is cut in 2 clusters.
+
+```{r}
+outlier_heatmap(met,
+                sample_labels=colData(met)$tumor_normal,
+                label_colors=c("darkseagreen","dodgerblue"))
+```
+
+The imputed data of the example study set displays a cluster of 5 samples (cluster 1) with an in average lower relative metabolite abundance. Due to the lack of batch information, this cannot be investigted further at this time. To demonstrate, how a cluster can be removed, we apply the function `remove_cluster` to remove cluster 1:
+
+```{r}
+met = remove_cluster(met,cluster=1)
+met
+```
+
+As displayed in the summary of the `met` object, the 5 samples of cluster 1 were successfully removed from the slots "raw" and "imputed".
+
+## Normalization
+
+Variance stabilizing normalization (vsn) is used ensure that the variance remains nearly constant over the measured spectrum (Huber et al., 2002).
+=======
 
 ## Removal of outliers
 
@@ -219,6 +246,42 @@ quality_plot(met)
 # Part II: Data analysis
 
 ## Unsupervised analysis
+>>>>>>> c0b38596b017eb07c1d4068ab9ed88dc0df205b5
+
+```{r}
+met = normalize_met(met)
+```
+
+<<<<<<< HEAD
+## Summary of processed object
+=======
+
+
+## Comparative analysis
+
+## Variance 
+>>>>>>> c0b38596b017eb07c1d4068ab9ed88dc0df205b5
+
+```{r}
+met
+```
+
+At this point the data processing is completed. The `MultiAssayExperiment` object contains now 4 slots:
+
+- raw - raw relative metabolic measurements as provided by company or core facility
+- imputed - imputed relative metabolic measurements (k-nearest neighbor imputation)
+- norm - normalized relative metabolic measurements (vsn)
+- norm_imputed - normalized imputed relative metabolic measurements (vsn)
+
+## Quality control of normalization
+
+```{r,fig.width=10,fig.height=8, message=FALSE}
+quality_plot(met)
+```
+
+# Part II: Data analysis
+
+## Unsupervised analysis
 
 ### PCA plot
 
@@ -229,6 +292,7 @@ autoplot(prcomp(t(assays(met)[["norm_imputed"]]),center = TRUE,scale = FALSE),
 ```
 
 
+<<<<<<< HEAD
 ### Correlation heatmap
 
 ### Consensus clustering
@@ -236,6 +300,19 @@ autoplot(prcomp(t(assays(met)[["norm_imputed"]]),center = TRUE,scale = FALSE),
 ## Comparative analysis
 
 
+=======
+## Visualization of metabolic networks
+
+To compare the structure of metabolic networks across tumor entities, network visualizations should ideally be perceptual uniform. However, networks are usually visualized using force-directed layouts (e.g. Fruchterman Reingold[^6]) generating pleasant but hardly interpretable networks earning the nickname ’hairballs’.
+
+### Hive plots
+
+To address this issue, Kryzwinski et al. have developed an algorithm in which nodes are placed on radially oriented linear axes according to a well-defined coordinate system[^7]. In resemblance to the top of a beehive, the authors termed these visualizations hive plots and show that they can be adjusted to suit the purpose, are easily explained and understood and most importantly can generate useful and quantitatively inter- pretable results.
+
+## Differentially abundant subpathways
+
+graph clustering - hotnet2 
+>>>>>>> c0b38596b017eb07c1d4068ab9ed88dc0df205b5
 
 # Session information
 
