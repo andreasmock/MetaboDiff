@@ -1,12 +1,9 @@
-#' Annotation using Small Molecule Pathway Database (SMPDB)
+#' Normalize metabolomic data by vsn
 #'
-#' @param metabolite_ids vector of HMDB, KEGG or ChEBI identifiers.
-#' @return dataframe containing SMPDB annotation for metabolite identifiers.
+#' @param @param met MultiAssayExperiment object with slots "raw" and "imputed"
+#' @return MultiAssayExperiment object with slots "raw", "imputed", "norm" and "norm_imputed"
 #' @examples
-#' get_SMPDBanno(c("HMDB00538", "HMDB00250"))
-#' get_SMPDBanno(c("C00002", "C00020"))
-#' get_SMPDBanno(c("15422", "16027"))
-#'
+#' normalize_met(met)
 normalize_met <- function(met) {
     raw_temp = met[["raw"]]
     imputed_temp = met[["imputed"]]
@@ -14,8 +11,8 @@ normalize_met <- function(met) {
     assay(imputed_temp) = justvsn(assay(imputed_temp))
 
 
-    sampleMap_raw = sampleMap(met)[1:86,]
-    sampleMap_imputed = sampleMap(met)[1:86,]
+    sampleMap_raw = sampleMap(met)[1:nrow(colData(met)),]
+    sampleMap_imputed = sampleMap(met)[1:nrow(colData(met)),]
 
     sampleMap_raw$assay = droplevels(sampleMap_raw$assay)
     sampleMap_imputed$assay = droplevels(sampleMap_imputed$assay)

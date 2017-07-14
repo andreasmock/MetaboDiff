@@ -1,12 +1,10 @@
-#' Annotation using Small Molecule Pathway Database (SMPDB)
+#' Impute metabolomic data by k-nearest neighbour imputation
 #'
-#' @param metabolite_ids vector of HMDB, KEGG or ChEBI identifiers.
-#' @return dataframe containing SMPDB annotation for metabolite identifiers.
+#' @param met MultiAssayExperiment object with slots "raw"
+#' @param cutoff Cutoff at which fraction of missing values, a metabolite should be removed from the data. The recommended cutoff is 0.4, e.g. 40%.
+#' @return MultiAssayExperiment object with splots "raw" and "imputed
 #' @examples
-#' get_SMPDBanno(c("HMDB00538", "HMDB00250"))
-#' get_SMPDBanno(c("C00002", "C00020"))
-#' get_SMPDBanno(c("15422", "16027"))
-#'
+#' knn_impute(met_example,cutoff=0.4)
 knn_impute <- function(met, cutoff) {
     met_temp = met[["raw"]]
     met_temp=met_temp[!rowSums(is.na(assay(met_temp)))>(ncol(assay(met_temp))*cutoff),]
