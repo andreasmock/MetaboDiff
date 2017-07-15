@@ -4,14 +4,25 @@ Andreas Mock
 Experimental Neurosurgery, Heidelberg University Hospital,
 Division of Applied Bioinformatics, German Cancer Research Center (DFKZ) Heidelberg &
 Department of Medical Oncology, National Center for Tumor Diseases (NCT) Heidelberg
-2017-07-12
+2017-07-15
+
+-   [Introduction](#introduction)
+-   [Installation](#installation)
+-   [Part I: Data processing](#part-i-data-processing)
+    -   [Reading data and annotation](#reading-data-and-annotation)
+    -   [Imputation of missing values](#imputation-of-missing-values)
+    -   [Removal of outliers](#removal-of-outliers)
+    -   [Normalization](#normalization)
+    -   [Summary of processed object](#summary-of-processed-object)
+    -   [Quality control of normalization](#quality-control-of-normalization)
+-   [Part II: Data analysis](#part-ii-data-analysis)
+-   [Session information](#session-information)
+-   [References](#references)
 
 Introduction
 ============
 
-Comparative metabolomics comes of age by an increasing number of commercial vendors (i.e. Metabolon ®) offering reproducible high-quality metabolomic data for translational researchers outside the mass spectrometry field. This R packages aims to provide a low-level entry to differential metabolomic analysis by starting off with the table of relative metabolite quantifications provided by commercial vendors.
-
-ds
+Comparative non-targeted metabolomics comes of age through an increasing number of commercial vendors offering reproducible high-quality metabolomic data for translational researchers outside the mass spectrometry field. This R packages aims to provide a low-level entry to differential metabolomic analysis by starting off with the table of relative metabolite quantifications provided by commercial vendors or core facilities.
 
 Installation
 ============
@@ -29,22 +40,23 @@ and once installed loaded by
 library("MetaboDiff")
 ```
 
+Part I: Data processing
+=======================
+
 Reading data and annotation
-===========================
+---------------------------
 
-Example data
-------------
+### Example data
 
-The example data is derived from a study by Priolo and colleagues in which they used the service of the Metabolon® company to compare the tissue metabolome of 40 prostate cancers with 16 normal prostate specimens.[1] The table summarizing the relative metabolic measurements can be loaded from the journal homepage as follows:
+The example data is derived from a study by Priolo and colleagues in which they used the service of Metabolon® to compare the tissue metabolome of 40 prostate cancers with 16 normal prostate specimens.[1] The table summarizing the relative metabolic measurements can be loaded from the journal homepage as follows:
 
 ``` r
 data = as.matrix(read.xls("http://cancerres.aacrjournals.org/highwire/filestream/290852/field_highwire_adjunct_files/4/131853_1_supp_2658512_nbpsn6.xlsx",sheet=5,na.strings = ""))
 ```
 
-Input files
------------
+### Input files
 
-The metabolomic data within `MetaboDiff` is stored as a `MultiAssayExperiment`class [2]. This framework enables the coordinated representation of multiple experiments on partially overlapping samples with associated metadata and integrated subsetting across experiments. In the context of metabolomic data analysis, multiple assays are needed to store raw data and imputed data (see section on data imputation).
+The metabolomic data within `MetaboDiff` is stored as a `MultiAssayExperiment`class [2]. This framework enables the coordinated representation of multiple experiments on partially overlapping samples with associated metadata and integrated subsetting across experiments. In the context of metabolomic data analysis, multiple assays are needed to store raw data and imputed data which usually contain different number of metabolites due to missing values (see section on data imputation for more details).
 
 The core components of the `MultiAssayExperiment` class are:
 
@@ -54,7 +66,7 @@ The core components of the `MultiAssayExperiment` class are:
 -   `colData` - a slot of class data frame describing the sample metadata available across all experiments
 -   `sampleMap` - a slot of class data frame relating clinical data to experimental assay
 
-### Creation of assay object containing metabolomic data
+#### Creation of assay object containing metabolomic data
 
 ``` r
 assay = apply(data[3:nrow(data),8:ncol(data)],2,as.numeric)
@@ -69,7 +81,7 @@ assay[1:4,1:5]
     ## met3       NA  42373.93  27141.21      NA  38390.78
     ## met4 61638.77  74595.78        NA      NA        NA
 
-### Creation of colData object containing sample metadata
+#### Creation of colData object containing sample metadata
 
 ``` r
 colData = data.frame(id = colnames(t(data[1,8:ncol(data)])),
@@ -86,7 +98,7 @@ head(colData)
     ## pat5 cp29            N
     ## pat6 cp32            N
 
-### Creation of rowData object containing metabolite annotations and ids
+#### Creation of rowData object containing metabolite annotations and ids
 
 For the rowData object we start off with the annotation already provided by the commercial vendor:
 
@@ -101,9 +113,9 @@ colnames(rowData)
     ## [1] "BIOCHEMICAL"   "SUPER_PATHWAY" "SUB_PATHWAY"   "METABOLON_ID" 
     ## [5] "PLATFORM"      "KEGG_ID"       "HMDB_ID"
 
-### Annotation using Small Molecular Pathway Database (SMPDB)
+#### Annotation using Small Molecular Pathway Database (SMPDB)
 
-Alongside the metabolic measurments, Metabolon ® provides metabolite annotation including so called super-pathways and sub-pathways. However, theses annotations might very from vendor to vendor. Hence, the `MetaboDiff` package makes use of the Small Molecular Pathway Database (SMPDB) for metabolite annotation[3]. `MetaboDiff` supports all common metabolic IDs as input for the annotation (HMDB, KEGG and ChEBI). In the example data, both the KEGG and the HMDB identifier are available. As the databases (HMDB, KEGG or ChEBI) cover unique annotations due to different standards in identifying and reporting metabolites [4], the function `get_SMPDBanno` queries the database using all three ids (if available) and joins all available information. The current SMPDB build used within `MetaboDiff` is version 2.0 and will be updated as new versions are released. Please refer to the development branch of `MetaboDiff` to work with the latest SMPDB annotation.
+Alongside the metabolic measurements, Metabolon ® provides metabolite annotation including so called super-pathways and sub-pathways. However, theses annotations might very from vendor to vendor. Hence, the `MetaboDiff` package makes use of the Small Molecular Pathway Database (SMPDB) for metabolite annotation[3]. `MetaboDiff` supports all common metabolic IDs as input for the annotation (HMDB, KEGG and ChEBI). In the example data, both the KEGG and the HMDB identifier are available. As the databases (HMDB, KEGG or ChEBI) cover unique annotations due to different standards in identifying and reporting metabolites [4], the function `get_SMPDBanno` queries the database using all three ids (if available) and joins all available information. The current SMPDB build used within `MetaboDiff` is version 2.0 and will be updated as new versions are released. Please refer to the development branch of `MetaboDiff` to work with the latest SMPDB annotation.
 
 ``` r
 rowData = get_SMPDBanno(rowData,
@@ -112,8 +124,7 @@ rowData = get_SMPDBanno(rowData,
                         column_chebi_id=NA)
 ```
 
-Creation of SummarizedExperiment object and ExperimentList
-----------------------------------------------------------
+### Creation of SummarizedExperiment object and ExperimentList
 
 ``` r
 se = SummarizedExperiment(assays=assay,
@@ -132,8 +143,7 @@ experiment_list
     ## colnames(86): sample1 sample2 ... sample85 sample86
     ## colData names(0):
 
-Creation of sampleMap
----------------------
+### Creation of sampleMap
 
 ``` r
 sampleMap = data.frame(primary=rownames(colData),
@@ -141,8 +151,7 @@ sampleMap = data.frame(primary=rownames(colData),
 sampleMap_list = listToMap(list(raw=sampleMap))
 ```
 
-Construction of MultiAssayExperiment
-------------------------------------
+### Construction of MultiAssayExperiment
 
 ``` r
 met = MultiAssayExperiment(experiments = experiment_list,
@@ -173,21 +182,23 @@ met
     ##  assays() - convert ExperimentList to a SimpleList of matrices
 
 Imputation of missing values
-============================
+----------------------------
 
-In contrast to microarrays, missing values are common in quantitative metabolomic datasets.
+In contrast to other high-throughput technologies, missing values are common in quantitative metabolomic datasets.
 
-The function `na_heatmap` visualizes the missing metabolite measurements across the samples. Optionally, a sample label can be displayed (e.g. tumor vs. normal) and the color and name specified.
+The function `na_heatmap` visualizes the missing metabolite measurements across the samples. A vector of sample labels (e.g. tumor vs. normal) and the color of the sample levels needs to be specified.
 
 ``` r
 na_heatmap(met,
-           sample_label=colData(met)$tumor_normal,
+           sample_labels=colData(met)$tumor_normal,
            label_colors=c("darkseagreen","dodgerblue"))
 ```
 
-![](MetaboDiff_tutorial_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-11-1.png)
+![](MetaboDiff_tutorial_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-29-1.png)
 
-K-nearest neighbour imputation was found ... 40% suggested. Armitage et al., 2015
+The example data supports the need for data imputation. It could be shown that k-nearest neighbor imputation minimizes the effects on the normality and variance of the data as long as the number of missing data does not exceed 40% [5].
+
+The function 'knn\_impute' adds the slot "impute" to the MultiAssayExperiment object that contains the imputed relative metabolite measurements for all metabolites with raw measurements in more than 60% of cases. We recommend a cutoff of 40% (i.e. 0.4). However the cutoff might be changed according to the discretion of the user.
 
 ``` r
 met = knn_impute(met,cutoff=0.4)
@@ -207,51 +218,43 @@ met
     ##  *Format() - convert ExperimentList into a long or wide DataFrame 
     ##  assays() - convert ExperimentList to a SimpleList of matrices
 
-Quality control
-===============
+As apparent form the summary description of the object 'met' the imputed data matrix contains only 238 of the 307 original metabolites according the cutoff of 40% missing values.
+
+Removal of outliers
+-------------------
+
+Before we normalize the data, we want to exclude outliers in the study set. To this end, we provide the function `outlier_heatmap`. The sample annotation shows the number of missing metabolites per sample as the proxy of the impact of imputation on clustering. To showcase outliers, the hierarchical clustering tree is cut in 2 clusters.
 
 ``` r
-#reshape data for ggplot2 using extractor function 
-mdata = as.data.frame(longFormat(met[,,1],colDataCols="tumor_normal"))
-mdata$value = log2(mdata$value)
-ggplot(mdata, 
-       mapping=aes(x=colname,
-                          y=value,
-                          fill=tumor_normal)) + 
-    geom_boxplot() + xlab("") +
-    theme(axis.text.x=element_blank()) + ylab("log2(raw abundance)") + scale_fill_manual(values=c("darkseagreen","dodgerblue"))
+outlier_heatmap(met,
+                sample_labels=colData(met)$tumor_normal,
+                label_colors=c("darkseagreen","dodgerblue"))
 ```
 
-    ## Warning: Removed 6057 rows containing non-finite values (stat_boxplot).
+![](MetaboDiff_tutorial_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-31-1.png)
 
-![](MetaboDiff_tutorial_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-13-1.png)
-
-Normalization
-=============
+The imputed data of the example study set displays a cluster of 5 samples (cluster 1) with an in average lower relative metabolite abundance. Due to the lack of batch information, this cannot be investigted further at this time. To demonstrate, how a cluster can be removed, we apply the function `remove_cluster` to remove cluster 1:
 
 ``` r
-met = normalize_met(met)
+met = remove_cluster(met,cluster=1)
 ```
 
-    ## vsn2: 307 x 86 matrix (1 stratum).
+    ## harmonizing input:
+    ##   removing 5 sampleMap rows with 'colname' not in colnames of experiments
 
-    ## Please use 'meanSdPlot' to verify the fit.
-
-    ## vsn2: 238 x 86 matrix (1 stratum).
-
-    ## Please use 'meanSdPlot' to verify the fit.
+    ## harmonizing input:
+    ##   removing 5 sampleMap rows with 'colname' not in colnames of experiments
+    ##   removing 5 colData rownames not in sampleMap 'primary'
 
 ``` r
 met
 ```
 
-    ## A MultiAssayExperiment object of 4 listed
+    ## A MultiAssayExperiment object of 2 listed
     ##  experiments with user-defined names and respective classes. 
-    ##  Containing an ExperimentList class object of length 4: 
-    ##  [1] raw: SummarizedExperiment with 307 rows and 86 columns 
-    ##  [2] imputed: SummarizedExperiment with 238 rows and 86 columns 
-    ##  [3] norm: SummarizedExperiment with 307 rows and 86 columns 
-    ##  [4] norm_imputed: SummarizedExperiment with 238 rows and 86 columns 
+    ##  Containing an ExperimentList class object of length 2: 
+    ##  [1] raw: SummarizedExperiment with 307 rows and 81 columns 
+    ##  [2] imputed: SummarizedExperiment with 238 rows and 81 columns 
     ## Features: 
     ##  experiments() - obtain the ExperimentList instance 
     ##  colData() - the primary/phenotype DataFrame 
@@ -260,114 +263,69 @@ met
     ##  *Format() - convert ExperimentList into a long or wide DataFrame 
     ##  assays() - convert ExperimentList to a SimpleList of matrices
 
-``` r
-#reshape data for ggplot2 using extractor function 
-mdata = as.data.frame(longFormat(met[,,3],colDataCols="tumor_normal"))
-mdata$value = scale(mdata$value,scale=FALSE)
-ggplot(mdata, 
-       mapping=aes(x=colname,
-                          y=value,
-                          fill=tumor_normal)) + 
-    geom_boxplot() + xlab("") +
-    theme(axis.text.x=element_blank()) + ylab("log2(vsn-normalized abundance)") + scale_fill_manual(values=c("darkseagreen","dodgerblue"))
-```
+As displayed in the summary of the `met` object, the 5 samples of cluster 1 were successfully removed from the slots "raw" and "imputed".
 
-Removal of outliers
-===================
+Normalization
+-------------
+
+Variance stabilizing normalization (vsn) is used ensure that the variance remains nearly constant over the measured spectrum (Huber et al., 2002).
 
 ``` r
-col_list = list(grouping=c("darkseagreen","dodgerblue"))
-        names(col_list$grouping)=c("N","T")
-        met_na = is.na(assay(met))*1
-         col_na = apply(met_na,2,sum)/nrow(met_na)
-        colanno = columnAnnotation(df=data.frame(grouping=colData$tumor_normal),
-                                   col=col_list,
-                                   barplot=anno_barplot(col_na[order(col_na)],
-                                                        gp=gpar(fill="brown",
-                                                                col="brown"),
-                                                        axis=TRUE,
-                                                        border=FALSE))
-        
-        
-Heatmap(cor(scale(assays(met)[["norm_imputed"]],scale=FALSE)),
-        show_column_names = FALSE,
-                 show_row_names = FALSE,
-        top_annotation = colanno) 
+met = normalize_met(met)
 ```
 
-![](MetaboDiff_tutorial_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-16-1.png)
+    ## vsn2: 307 x 81 matrix (1 stratum).
 
-Cuttree
+    ## Please use 'meanSdPlot' to verify the fit.
 
-Unsupervised analysis
-=====================
+    ## vsn2: 238 x 81 matrix (1 stratum).
+
+    ## Please use 'meanSdPlot' to verify the fit.
+
+Summary of processed object
+---------------------------
 
 ``` r
-autoplot(prcomp(t(assays(met)[["norm_imputed"]]),center = TRUE,scale = FALSE),
-         data=as.data.frame(colData(met)),
-         colour="tumor_normal")
+met
 ```
 
-![](MetaboDiff_tutorial_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-18-1.png)
+    ## A MultiAssayExperiment object of 4 listed
+    ##  experiments with user-defined names and respective classes. 
+    ##  Containing an ExperimentList class object of length 4: 
+    ##  [1] raw: SummarizedExperiment with 307 rows and 81 columns 
+    ##  [2] imputed: SummarizedExperiment with 238 rows and 81 columns 
+    ##  [3] norm: SummarizedExperiment with 307 rows and 81 columns 
+    ##  [4] norm_imputed: SummarizedExperiment with 238 rows and 81 columns 
+    ## Features: 
+    ##  experiments() - obtain the ExperimentList instance 
+    ##  colData() - the primary/phenotype DataFrame 
+    ##  sampleMap() - the sample availability DataFrame 
+    ##  `$`, `[`, `[[` - extract colData columns, subset, or experiment 
+    ##  *Format() - convert ExperimentList into a long or wide DataFrame 
+    ##  assays() - convert ExperimentList to a SimpleList of matrices
 
-Comparative analysis
-====================
+At this point the data processing is completed. The `MultiAssayExperiment` object contains now 4 slots:
 
-Variance
-========
+-   raw - raw relative metabolic measurements as provided by company or core facility
+-   imputed - imputed relative metabolic measurements (k-nearest neighbor imputation)
+-   norm - normalized relative metabolic measurements (vsn)
+-   norm\_imputed - normalized imputed relative metabolic measurements (vsn)
+
+Quality control of normalization
+--------------------------------
 
 ``` r
-df = data.frame(sd=apply(assays(met)[[3]],1,sd,na.rm=TRUE),
-                smpdb_pathway=rowData(met[["norm"]])$Pathway.Name,
-                super_pathway = rowData(met[["norm"]])$SUPER_PATHWAY)
+quality_plot(met)
 ```
 
-``` r
-sd_order=ddply(df,"super_pathway",function(df) median(df$sd,na.rm=TRUE))
+    ## Warning: Removed 5356 rows containing non-finite values (stat_boxplot).
 
-df$super_pathway = factor(df$super_pathway,
-                          levels=sd_order$super_pathway[order(sd_order$V1,decreasing=TRUE)])
+    ## Warning: Removed 5356 rows containing non-finite values (stat_boxplot).
 
-ggplot(df, aes(x=super_pathway,y=sd,fill=super_pathway)) + geom_boxplot() + coord_flip() + guides(fill=FALSE)
-```
+![](MetaboDiff_tutorial_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-35-1.png)
 
-    ## Warning: Removed 10 rows containing non-finite values (stat_boxplot).
-
-![](MetaboDiff_tutorial_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-20-1.png)
-
-``` r
-sd_order=ddply(df,"smpdb_pathway",function(df) median(df$sd,na.rm=TRUE))
-
-df$smpdb_pathway = factor(df$smpdb_pathway,
-                          levels=sd_order$smpdb_pathway[order(sd_order$V1,decreasing=TRUE)])
-
-ggplot(df, aes(x=smpdb_pathway,y=sd,fill=smpdb_pathway)) + geom_boxplot() + coord_flip() + guides(fill=FALSE)
-```
-
-    ## Warning: Removed 10 rows containing non-finite values (stat_boxplot).
-
-![](MetaboDiff_tutorial_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-21-1.png)
-
-``` r
-Heatmap(cor(t(assays(met)[["norm_imputed"]])))
-```
-
-![](MetaboDiff_tutorial_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-22-1.png)
-
-Visualization of metabolic networks
-===================================
-
-To compare the structure of metabolic networks across tumor entities, network visualizations should ideally be perceptual uniform. However, networks are usually visualized using force-directed layouts (e.g. Fruchterman Reingold[5]) generating pleasant but hardly interpretable networks earning the nickname ’hairballs’.
-
-Hive plots
-----------
-
-To address this issue, Kryzwinski et al. have developed an algorithm in which nodes are placed on radially oriented linear axes according to a well-defined coordinate system[6]. In resemblance to the top of a beehive, the authors termed these visualizations hive plots and show that they can be adjusted to suit the purpose, are easily explained and understood and most importantly can generate useful and quantitatively inter- pretable results.
-
-Differentially abundant subpathways
-===================================
-
-graph clustering - hotnet2
+Part II: Data analysis
+======================
 
 Session information
 ===================
@@ -388,44 +346,45 @@ sessionInfo()
     ## [1] en_GB.UTF-8/en_GB.UTF-8/en_GB.UTF-8/C/en_GB.UTF-8/en_GB.UTF-8
     ## 
     ## attached base packages:
-    ##  [1] grid      parallel  stats4    stats     graphics  grDevices utils    
+    ##  [1] grid      stats4    parallel  stats     graphics  grDevices utils    
     ##  [8] datasets  methods   base     
     ## 
     ## other attached packages:
-    ##  [1] plyr_1.8.4                 RColorBrewer_1.1-2        
-    ##  [3] HiveR_0.2.55               vsn_3.44.0                
-    ##  [5] impute_1.50.1              ComplexHeatmap_1.14.0     
-    ##  [7] ggfortify_0.4.1            dplyr_0.5.0               
-    ##  [9] purrr_0.2.2.2              readr_1.1.1               
-    ## [11] tidyr_0.6.3                tibble_1.3.3              
-    ## [13] ggplot2_2.2.1              tidyverse_1.1.1           
-    ## [15] MetaboDiff_0.1.0           SummarizedExperiment_1.6.3
-    ## [17] DelayedArray_0.2.4         matrixStats_0.52.2        
-    ## [19] Biobase_2.36.2             GenomicRanges_1.28.2      
-    ## [21] GenomeInfoDb_1.12.0        IRanges_2.10.1            
-    ## [23] S4Vectors_0.14.1           BiocGenerics_0.22.0       
-    ## [25] MultiAssayExperiment_1.2.1 gdata_2.18.0              
-    ## [27] devtools_1.13.2           
+    ##  [1] MetaboDiff_0.1.0           factoextra_1.0.4          
+    ##  [3] cluster_2.0.6              cowplot_0.7.0             
+    ##  [5] plyr_1.8.4                 RColorBrewer_1.1-2        
+    ##  [7] HiveR_0.2.55               vsn_3.44.0                
+    ##  [9] impute_1.50.1              ComplexHeatmap_1.14.0     
+    ## [11] ggfortify_0.4.1            dplyr_0.5.0               
+    ## [13] purrr_0.2.2.2              readr_1.1.1               
+    ## [15] tidyr_0.6.3                tibble_1.3.3              
+    ## [17] ggplot2_2.2.1              tidyverse_1.1.1           
+    ## [19] SummarizedExperiment_1.6.3 DelayedArray_0.2.4        
+    ## [21] matrixStats_0.52.2         GenomicRanges_1.28.2      
+    ## [23] GenomeInfoDb_1.12.0        IRanges_2.10.1            
+    ## [25] S4Vectors_0.14.1           MultiAssayExperiment_1.2.1
+    ## [27] Biobase_2.36.2             BiocGenerics_0.22.0       
+    ## [29] gdata_2.18.0               devtools_1.13.2           
     ## 
     ## loaded via a namespace (and not attached):
     ##  [1] colorspace_1.3-2        rjson_0.2.15           
     ##  [3] class_7.3-14            modeltools_0.2-21      
-    ##  [5] mclust_5.3              rprojroot_1.2          
+    ##  [5] rprojroot_1.2           mclust_5.3             
     ##  [7] circlize_0.4.0          XVector_0.16.0         
     ##  [9] GlobalOptions_0.0.12    affyio_1.46.0          
-    ## [11] flexmix_2.3-14          mvtnorm_1.0-6          
-    ## [13] lubridate_1.6.0         xml2_1.1.1             
-    ## [15] mnormt_1.5-5            robustbase_0.92-7      
-    ## [17] knitr_1.16              jsonlite_1.5           
-    ## [19] broom_0.4.2             cluster_2.0.6          
+    ## [11] ggrepel_0.6.5           flexmix_2.3-14         
+    ## [13] mvtnorm_1.0-6           lubridate_1.6.0        
+    ## [15] xml2_1.1.1              mnormt_1.5-5           
+    ## [17] robustbase_0.92-7       knitr_1.16             
+    ## [19] jsonlite_1.5            broom_0.4.2            
     ## [21] kernlab_0.9-25          png_0.1-7              
     ## [23] shinydashboard_0.6.1    shiny_1.0.3            
     ## [25] compiler_3.4.0          httr_1.2.1             
     ## [27] backports_1.1.0         assertthat_0.2.0       
     ## [29] Matrix_1.2-10           lazyeval_0.2.0         
     ## [31] limma_3.32.2            htmltools_0.3.6        
-    ## [33] tools_3.4.0             affy_1.54.0            
-    ## [35] gtable_0.2.0            GenomeInfoDbData_0.99.0
+    ## [33] tools_3.4.0             gtable_0.2.0           
+    ## [35] GenomeInfoDbData_0.99.0 affy_1.54.0            
     ## [37] reshape2_1.4.2          Rcpp_0.12.11           
     ## [39] cellranger_1.1.0        trimcluster_0.1-2      
     ## [41] preprocessCore_1.38.1   nlme_3.1-131           
@@ -466,6 +425,4 @@ References
 
 [4] Thiele, I., Swainston, N., Fleming, R. M. T., Hoppe, A., Sahoo, S., Aurich, M. K., et al. (2013). A community-driven global reconstruction of human metabolism. Nature Biotechnology, 31(5), 419–425. <http://doi.org/10.1038/nbt.2488>
 
-[5] Jewison T, Su Y, Disfany FM, et al. SMPDB 2.0: Big Improvements to the Small Molecule Pathway Database Nucleic Acids Res. 2014 Jan;42(Database issue):D478-84.
-
-[6] Thiele, I., Swainston, N., Fleming, R. M. T., Hoppe, A., Sahoo, S., Aurich, M. K., et al. (2013). A community-driven global reconstruction of human metabolism. Nature Biotechnology, 31(5), 419–425. <http://doi.org/10.1038/nbt.2488>
+[5] Armitage, E. G., Godzien, J., Alonso-Herranz, V., L pez-Gonz lvez, N., & Barbas, C. (2015). Missing value imputation strategies for metabolomics data. Electrophoresis, 36(24), 3050–3060. <http://doi.org/10.1002/elps.201500352>

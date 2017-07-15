@@ -189,27 +189,6 @@ met
 
 As displayed in the summary of the `met` object, the 5 samples of cluster 1 were successfully removed from the slots "raw" and "imputed".
 
-## Removal of outliers
-
-Before we normalize the data, we want to exclude outliers in the study set. To this end, we provide the function `outlier_heatmap`.
-The sample annotation shows the number of missing metabolites per sample as the proxy of the impact of imputation on clustering. 
-To showcase outliers, the hierarchical clustering tree is cut in 2 clusters.
-
-```{r}
-outlier_heatmap(met,
-                sample_labels=colData(met)$tumor_normal,
-                label_colors=c("darkseagreen","dodgerblue"))
-```
-
-The imputed data of the example study set displays a cluster of 5 samples (cluster 1) with an in average lower relative metabolite abundance. Due to the lack of batch information, this cannot be investigted further at this time. To demonstrate, how a cluster can be removed, we apply the function `remove_cluster` to remove cluster 1:
-
-```{r}
-met = remove_cluster(met,cluster=1)
-met
-```
-
-As displayed in the summary of the `met` object, the 5 samples of cluster 1 were successfully removed from the slots "raw" and "imputed".
-
 ## Normalization
 
 Variance stabilizing normalization (vsn) is used ensure that the variance remains nearly constant over the measured spectrum (Huber et al., 2002).
