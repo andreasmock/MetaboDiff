@@ -10,7 +10,7 @@ diff_test <- function(met, group_factors) {
     for (i in 1:length(group_factors)){
         df = rowttests(assays(met)[["norm_imputed"]],
                        fac = as.factor(colData(met)[[group_factors[i]]]))
-        df_ihw = as.data.frame(ihw(df$p.value,
+        df_ihw = IHW::as.data.frame(ihw(df$p.value,
                                    as.numeric(apply(assays(met)[["norm_imputed"]],1,var)),
                                    alpha = 0.05,
                                    nbins = 20))
