@@ -16,8 +16,6 @@ dataframe containing SMPDB annotation for metabolite identifiers.
 Annotation using Small Molecule Pathway Database (SMPDB)
 }
 \examples{
-get_SMPDBanno(c("HMDB00538", "HMDB00250"))
-get_SMPDBanno(c("C00002", "C00020"))
-get_SMPDBanno(c("15422", "16027"))
+get_SMPDBanno(as.data.frame(rowData(met_example[["raw"]]))[,1:7],column_kegg_id=6,column_hmdb_id=7,column_chebi_id=NA)
 
 }
