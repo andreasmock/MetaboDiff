@@ -10,7 +10,6 @@ Depends:
     gdata,
     Biobase,
     devtools,
-    gdata,
     MultiAssayExperiment,
     SummarizedExperiment,
     tidyverse,
@@ -18,14 +17,16 @@ Depends:
     ComplexHeatmap,
     impute,
     vsn,
-    HiveR,
     RColorBrewer,
     plyr,
     cowplot,
     cluster,
-    factoextra
-License: What license is it under?
+    factoextra,
+    genefilter,
+    FactoMineR,
+    IHW,
+    BiocGenerics
+License: MIT
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 6.0.1
-

@@ -4,7 +4,7 @@
 \alias{get_SMPDBanno}
 \title{Annotation using Small Molecule Pathway Database (SMPDB)}
 \usage{
-get_SMPDBanno(metabolite_ids)
+get_SMPDBanno(rowData, column_kegg_id, column_hmdb_id, column_chebi_id)
 }
 \arguments{
 \item{metabolite_ids}{vector of HMDB, KEGG or ChEBI identifiers.}
@@ -19,4 +19,5 @@ Annotation using Small Molecule Pathway Database (SMPDB)
 get_SMPDBanno(c("HMDB00538", "HMDB00250"))
 get_SMPDBanno(c("C00002", "C00020"))
 get_SMPDBanno(c("15422", "16027"))
+
 }

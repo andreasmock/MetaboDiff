@@ -61,11 +61,13 @@ library("MetaboDiff")
 
 ### Example data
 
-The example data is derived from a study by Priolo and colleagues in which they used the service of Metabolon&reg; to compare the tissue metabolome of 40 prostate cancers with 16 normal prostate specimens.[^1] 
+The example data is derived from a study by Priolo and colleagues in which they used the service of Metabolon&reg; to compare the tissue metabolome of 40 prostate cancers with 16 normal prostate specimens [^1]. 
 The table summarizing the relative metabolic measurements can be loaded from the journal homepage as follows:
 
 ```{r, eval=TRUE, message=FALSE}
-data = as.matrix(read.xls("http://cancerres.aacrjournals.org/highwire/filestream/290852/field_highwire_adjunct_files/4/131853_1_supp_2658512_nbpsn6.xlsx",sheet=5,na.strings = ""))
+data = as.matrix(read.xls("http://cancerres.aacrjournals.org/highwire/filestream/290852/field_highwire_adjunct_files/4/131853_1_supp_2658512_nbpsn6.xlsx",
+                          sheet=5,
+                          na.strings = ""))
 ```
 
 ### Input files
@@ -74,12 +76,13 @@ The metabolomic data within `MetaboDiff` is stored as a `MultiAssayExperiment`cl
 
 The core components of the `MultiAssayExperiment` class are:
 
-* `ExperimentList` - a slot of class ExperimentList containing data for each experimental assay. Within the ExperimentList slot, the metabolomic data is stored as a 
-SummarizedExperiment object consisting of:
+* `ExperimentList` - a slot of class ExperimentList containing data for each experimental assay. Within the ExperimentList slot, the metabolomic data are stored as  
+SummarizedExperiment objects consisting of:
     + `assay` - a matrix containing the relative metabolic measurements. 
     + `rowData` - a dataframe containing the metabolite annotation..
 * `colData` - a slot of class data frame describing the sample metadata available across all experiments
 * `sampleMap` - a slot of class data frame relating clinical data to experimental assay
+* `metadata` - a slot of class list. Within MetaboDiff, this slot contains a list of dataframes summarizing the results from the hypothesis testing.
 
 #### Creation of assay object containing metabolomic data
 
@@ -123,7 +126,7 @@ colnames(rowData)
 
 #### Annotation using Small Molecular Pathway Database (SMPDB)
 
-Alongside the metabolic measurements, Metabolon &reg; provides metabolite annotation including so called super-pathways and sub-pathways. However, theses annotations might very from vendor to vendor. Hence, the `MetaboDiff` package makes use of the Small Molecular Pathway Database (SMPDB) for metabolite annotation[^3]. `MetaboDiff` supports all common metabolic IDs as input for the annotation (HMDB, KEGG and ChEBI). In the example data, both the KEGG and the HMDB identifier are available. As the databases (HMDB, KEGG or ChEBI) cover unique annotations due to different standards in identifying and reporting metabolites [^4], the function `get_SMPDBanno` queries the database using all three ids (if available) and joins all available information. The current SMPDB build used within `MetaboDiff` is version 2.0 and will be updated as new versions are released. Please refer to the development branch of `MetaboDiff` to work with the latest SMPDB annotation.
+Alongside the metabolic measurements, Metabolon&reg; provides metabolite annotation including so called super-pathways and sub-pathways. However, theses annotations might very from vendor to vendor. Hence, the `MetaboDiff` package makes use of the Small Molecular Pathway Database (SMPDB) for metabolite annotation [^3]. `MetaboDiff` supports all common metabolic IDs as input for the annotation (HMDB, KEGG and ChEBI). In the example data, both the KEGG and the HMDB identifier are available. As the databases (HMDB, KEGG or ChEBI) cover unique annotations due to different standards in identifying and reporting metabolites [^4], the function `get_SMPDBanno` queries the database using all three ids (if available) and joins all available information. The current SMPDB build used within `MetaboDiff` is version 2.0 and will be updated as new versions are released. Please refer to the development branch of `MetaboDiff` to work with the latest SMPDB annotation.
 
 ```{r}
 rowData = get_SMPDBanno(rowData,
@@ -151,7 +154,7 @@ sampleMap_list = listToMap(list(raw=sampleMap))
 
 ### Construction of MultiAssayExperiment
 
-```{r, message=FALSE}
+```{r, message=FALSE, warning=FALSE}
 met = MultiAssayExperiment(experiments = experiment_list,
                            colData = colData,
                            sampleMap = sampleMap_list)
@@ -195,7 +198,7 @@ outlier_heatmap(met,
 
 The imputed data of the example study set displays a cluster of 5 samples (cluster 1) with an in average lower relative metabolite abundance. Due to the lack of batch information, this cannot be investigted further at this time. To demonstrate, how a cluster can be removed, we apply the function `remove_cluster` to remove cluster 1:
 
-```{r}
+```{r, message=FALSE}
 met = remove_cluster(met,cluster=1)
 met
 ```
@@ -225,7 +228,7 @@ At this point the data processing is completed. The `MultiAssayExperiment` objec
 
 ## Quality control of normalization
 
-```{r,fig.width=10,fig.height=8, message=FALSE}
+```{r,fig.width=10,fig.height=8, message=FALSE, warning=FALSE}
 quality_plot(met,
              group_factor="tumor_normal",
              label_colors=c("darkseagreen","dodgerblue"))
@@ -294,7 +297,7 @@ volcano_plot(met,
 
 As expected, no metabolites was significant different between the randomly assigned grouping male vs. female after multiple testing with a cutoff of p_adjust < 0.05.
 
-## Pathway (enrichment) analysis
+## Pathway analysis
 
 In this part of the analysis, we will exploit the Small molecular Pathway Database (SMPDB) annotation to explore metabolic pathways and perform an enrichment analysis.
 
@@ -304,13 +307,13 @@ The annotations from the SMPDB has the prefix "SMPDB|". The remaining annotation
 colnames(rowData(met[["norm_imputed"]]))
 ```
 
-```{r, eval=F}
+```{r, fig.width=8, fig.height=9}
 variance_boxplot(met,
                  rowAnnotation = "SMPDB|Pathway.Name")
 ```
 
 
-## Correlation network analysis (WGCNA)
+## Correlation network analysis 
 
 # Session information
 
