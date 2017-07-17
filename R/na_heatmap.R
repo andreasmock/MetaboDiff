@@ -1,16 +1,16 @@
 #' Heatmap to visualize missing metabolites across the samples
 #'
 #' @param met MultiAssayExperiment object with slot "raw"
-#' @param sample_labels factor of sample labels
+#' @param group_factor name of column in colData for grouping
 #' @param label_colors vector of colors for levels of sample_labels
 #' @return heatmap visualizing missing metabolites across the samples
 #' @examples
-#' na_heatmap(met_example, colData(met_example)$tumor_normal, c("darkseagreen","dodgerblue"))
-na_heatmap = function(met, sample_labels, label_colors) {
+#' na_heatmap(met_example, group_factor="tumor_normal", label_colors=c("darkseagreen","dodgerblue"))
+na_heatmap = function(met, group_factor, label_colors) {
     met_na = is.na(assay(met))*1
     row_na = apply(met_na,1,sum)/ncol(met_na)
     col_na = apply(met_na,2,sum)/nrow(met_na)
-    sample_labels = as.factor(sample_labels)
+    sample_labels = as.factor(colData(met)[[group_factor]])
         col_list = list(grouping=label_colors)
         names(col_list$grouping)=levels(sample_labels)
         colanno = columnAnnotation(df=data.frame(grouping=sample_labels),

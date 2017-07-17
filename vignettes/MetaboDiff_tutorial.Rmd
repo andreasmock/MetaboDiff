@@ -26,9 +26,12 @@ library("vsn")
 library("HiveR")
 library("RColorBrewer")
 library("plyr")
+library("genefilter")
 library("cowplot")
 library("cluster")
 library("factoextra")
+library("FactoMineR")
+library("IHW")
 install_github("andreasmock/MetaboDiff")
 library("MetaboDiff")
 ```
@@ -93,8 +96,18 @@ assay[1:4,1:5]
 colData = data.frame(id = colnames(t(data[1,8:ncol(data)])),
                      tumor_normal = as.vector(t(data[1,8:ncol(data)])),
                    row.names=paste0(rep("pat",ncol(assay)),1:ncol(assay)))
+```
+
+To showcase the full functionality of `MetaboDiff`, we generate a second random group label "random_gender".
+
+```{r}
+#set seed for reproducibility 
+set.seed(1)
+
+colData$random_gender = sample(c("m","f"),size = nrow(colData),replace = TRUE)
 head(colData)
 ```
+
 
 #### Creation of rowData object containing metabolite annotations and ids 
 
@@ -149,11 +162,11 @@ met
 
 In contrast to other high-throughput technologies, missing values are common in quantitative metabolomic datasets. 
 
-The function `na_heatmap` visualizes the missing metabolite measurements across the samples. A vector of sample labels (e.g. tumor vs. normal) and the color of the sample levels needs to be specified.
+The function `na_heatmap` visualizes the missing metabolite measurements across the samples. The name of the column in colData for grouping and the label colors for the two groups need to be specified.
 
 ```{r}
 na_heatmap(met,
-           sample_labels=colData(met)$tumor_normal,
+           group_factor="tumor_normal",
            label_colors=c("darkseagreen","dodgerblue"))
 ```
 
@@ -176,7 +189,7 @@ To showcase outliers, the hierarchical clustering tree is cut in 2 clusters.
 
 ```{r}
 outlier_heatmap(met,
-                sample_labels=colData(met)$tumor_normal,
+                group_factor="tumor_normal",
                 label_colors=c("darkseagreen","dodgerblue"))
 ```
 
@@ -213,11 +226,87 @@ At this point the data processing is completed. The `MultiAssayExperiment` objec
 ## Quality control of normalization
 
 ```{r,fig.width=10,fig.height=8, message=FALSE}
-quality_plot(met)
+quality_plot(met,
+             group_factor="tumor_normal",
+             label_colors=c("darkseagreen","dodgerblue"))
 ```
 
 # Part II: Data analysis
 
+## Unsupervised analysis
+
+### Principal component analysis (PCA)
+
+```{r}
+res_pca = PCA(t(assays(met)[["norm_imputed"]]), 
+              scale.unit = TRUE,
+              graph=FALSE)
+```
+
+Extract and visualiye eigenvalues/variances:
+
+```{r}
+get_eig(res_pca)
+```
+
+Visualize eigenvalues/variances
+
+```{r}
+fviz_screeplot(res_pca, addlabels=TRUE)
+```
+
+Plot PCA
+
+```{r}
+fviz_pca_ind(res_pca,
+             label="none",
+             habillage=colData(met)[["tumor_normal"]],
+             palette=c("darkseagreen","dodgerblue"),
+             addEllipses = TRUE)
+```
+
+## Supervised analysis
+
+### Hypothesis testing
+
+Differential analysis for individual metabolites is performed using Student's T-Test. Correction for multiple testing is performed by independent hypothesis weighting (IHW [^6]) with variance as a covariate. 
+
+Hypothesis testing will be performed for the sample grouping "tumor_normal", as well for the randomly generated grouping "random_gender".
+
+```{r, message=FALSE}
+met = diff_test(met,
+                group_factors = c("tumor_normal","random_gender"))
+```
+
+The results of the hypothesis testing is saved in the `metadata` splot of the MultiAssayExperiment object. 
+
+```{r}
+str(metadata(met))
+```
+
+The columns of the result data frame are the unadjusted p-value (pval), the adjusted p-value by independent hypothesis weighting (adj_pval), the  Fold-Change between groups (fold_change) and the variance (var).
+
+The comparative analysis is visualized by means of a volcano plot.
+
+```{r}
+volcano_plot(met, 
+             group_factor="tumor_normal",
+             label_colors=c("darkseagreen","dodgerblue"))
+```
+
+As a sanity check, we also display the volcano plot for the random grouping "random_gender" for which we would not expect the same number of significant metabolites.
+
+```{r}
+volcano_plot(met, 
+             group_factor="random_gender",
+             label_colors=c("brown","orange"))
+```
+
+As expected, no metabolites was significant different between the randomly assigned grouping male vs. female after multiple testing with a cutoff of p_adjust < 0.05.
+
+### Pathway enrichment analysis
+
+## Correlation network analysis (WGCNA)
 
 # Session information
 
@@ -236,8 +325,6 @@ sessionInfo()
 
 [^5]: Armitage, E. G., Godzien, J., Alonso-Herranz, V., L pez-Gonz lvez, N., & Barbas, C. (2015). Missing value imputation strategies for metabolomics data. Electrophoresis, 36(24), 3050–3060. http://doi.org/10.1002/elps.201500352
 
-[^6]: T. M. J. Fruchterman and E. M. Reingold, “Graph drawing by force-directed placement,” Software: Practice and Experience, vol. 21, no. 11, pp. 1129–1164, 1991.
-
-[^7]: M. Krzywinski, I. Birol, S. J. M. Jones, and M. A. Marra, “Hive plots–rational approach to visualizing networks.,” Briefings in Bioinformatics, vol. 13, pp. 627–644, Sept. 2012.
+[^6]: Ignatiadis, N., Klaus, B., Zaugg, J. B., & Huber, W. (2016). Data-driven hypothesis weighting increases detection power in genome-scale multiple testing. Nature Methods, 13(7), 577–580. http://doi.org/10.1038/nmeth.3885
 
 
