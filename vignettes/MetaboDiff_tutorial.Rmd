@@ -32,6 +32,7 @@ library("cluster")
 library("factoextra")
 library("FactoMineR")
 library("IHW")
+library("BiocGenerics")
 install_github("andreasmock/MetaboDiff")
 library("MetaboDiff")
 ```
