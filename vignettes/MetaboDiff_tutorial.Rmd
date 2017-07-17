@@ -25,7 +25,6 @@ library("impute")
 library("vsn")
 library("HiveR")
 library("RColorBrewer")
-library("plyr")
 library("genefilter")
 library("cowplot")
 library("cluster")
@@ -297,13 +296,17 @@ As expected, no metabolites was significant different between the randomly assig
 
 ## Pathway (enrichment) analysis
 
+In this part of the analysis, we will exploit the Small molecular Pathway Database (SMPDB) annotation to explore metabolic pathways and perform an enrichment analysis.
+
+The annotations from the SMPDB has the prefix "SMPDB|". The remaining annotation was provided by the commercial vendor that generated the example data (i.e. Metabolon&reg;).
+
 ```{r}
 colnames(rowData(met[["norm_imputed"]]))
 ```
 
-
 ```{r, eval=F}
-variance_boxplot(met)
+variance_boxplot(met,
+                 rowAnnotation = "SMPDB|Pathway.Name")
 ```
 
 
