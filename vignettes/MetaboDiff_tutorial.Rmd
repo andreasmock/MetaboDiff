@@ -105,7 +105,7 @@ To showcase the full functionality of `MetaboDiff`, we generate a second random 
 #set seed for reproducibility 
 set.seed(1)
 
-colData$random_gender = sample(c("m","f"),size = nrow(colData),replace = TRUE)
+colData$random_gender = sample(c("random_male","random_female"),size = nrow(colData),replace = TRUE)
 head(colData)
 ```
 
@@ -234,9 +234,7 @@ quality_plot(met,
 
 # Part II: Data analysis
 
-## Unsupervised analysis
-
-### Principal component analysis (PCA)
+## Principal component analysis (PCA)
 
 ```{r}
 res_pca = PCA(t(assays(met)[["norm_imputed"]]), 
@@ -244,19 +242,13 @@ res_pca = PCA(t(assays(met)[["norm_imputed"]]),
               graph=FALSE)
 ```
 
-Extract and visualiye eigenvalues/variances:
-
-```{r}
-get_eig(res_pca)
-```
-
-Visualize eigenvalues/variances
+Visualize percentage of explained variances for the first ten principal components i.e. dimensions.
 
 ```{r}
 fviz_screeplot(res_pca, addlabels=TRUE)
 ```
 
-Plot PCA
+PCA plot.
 
 ```{r}
 fviz_pca_ind(res_pca,
@@ -266,9 +258,7 @@ fviz_pca_ind(res_pca,
              addEllipses = TRUE)
 ```
 
-## Supervised analysis
-
-### Hypothesis testing
+## Hypothesis testing
 
 Differential analysis for individual metabolites is performed using Student's T-Test. Correction for multiple testing is performed by independent hypothesis weighting (IHW [^6]) with variance as a covariate. 
 
@@ -305,7 +295,17 @@ volcano_plot(met,
 
 As expected, no metabolites was significant different between the randomly assigned grouping male vs. female after multiple testing with a cutoff of p_adjust < 0.05.
 
-### Pathway enrichment analysis
+## Pathway (enrichment) analysis
+
+```{r}
+colnames(rowData(met[["norm_imputed"]]))
+```
+
+
+```{r, eval=F}
+variance_boxplot(met)
+```
+
 
 ## Correlation network analysis (WGCNA)
 

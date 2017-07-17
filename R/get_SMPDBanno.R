@@ -14,6 +14,7 @@ get_SMPDBanno <- function(rowData,
     db = read.csv(system.file("extdata", "metabolites.csv", package = "MetaboDiff"))
     res = matrix(NA,nrow=nrow(rowData),ncol=ncol(db))
     colnames(res) = colnames(db)
+    colnames(res) = paste0("SMPDB|",colnames(res))
 
     if(!is.na(column_kegg_id)){
         temp1 = as.matrix(db[match(rowData[,column_kegg_id],db$KEGG.ID),])
