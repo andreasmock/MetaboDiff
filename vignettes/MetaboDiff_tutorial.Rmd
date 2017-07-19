@@ -13,45 +13,22 @@ output:
 fig_caption: yes
 ---
 
-```{r setup, include=FALSE}
-library("devtools")
-library("gdata")
-library("MultiAssayExperiment")
-library("SummarizedExperiment")
-library("tidyverse")
-library("ggfortify")
-library("ComplexHeatmap")
-library("impute")
-library("vsn")
-library("HiveR")
-library("RColorBrewer")
-library("genefilter")
-library("cowplot")
-library("cluster")
-library("factoextra")
-library("FactoMineR")
-library("IHW")
-library("BiocGenerics")
-install_github("andreasmock/MetaboDiff")
-library("MetaboDiff")
-```
-
 # Introduction
 
 Comparative non-targeted metabolomics comes of age through an increasing number of commercial vendors offering reproducible high-quality metabolomic data for translational researchers outside the mass spectrometry field. This R packages aims to provide a low-level entry to differential metabolomic analysis by starting off with the table of relative metabolite quantifications provided by commercial vendors or core facilities. 
 
 # Installation
 
-The `MetaboDiff` R package can be installed via Github
+The `MetaboDiff` R package can be installed via Github. Please note that `MetaboDiff` requires an R version >= 3.4.
 
-```{r,eval=FALSE}
-library(devtools)
+```{r, message=FALSE}
+library("devtools")
 install_github("andreasmock/MetaboDiff")
 ```
 
 and once installed loaded by
 
-```{r,eval=FALSE, message=FALSE}
+```{r, message=FALSE}
 library("MetaboDiff")
 ```
 
@@ -65,7 +42,7 @@ The example data is derived from a study by Priolo and colleagues in which they 
 The table summarizing the relative metabolic measurements can be loaded from the journal homepage as follows:
 
 ```{r, eval=TRUE, message=FALSE}
-data = as.matrix(read.xls("http://cancerres.aacrjournals.org/highwire/filestream/290852/field_highwire_adjunct_files/4/131853_1_supp_2658512_nbpsn6.xlsx",
+data = as.matrix(gdata::read.xls("http://cancerres.aacrjournals.org/highwire/filestream/290852/field_highwire_adjunct_files/4/131853_1_supp_2658512_nbpsn6.xlsx",
                           sheet=5,
                           na.strings = ""))
 ```
@@ -315,6 +292,12 @@ variance_boxplot(met,
 
 ## Correlation network analysis 
 
+This section describes the generation of a weighted correlation metabolic network using the `WGCNA` R package by Langfelder and Horvarth [^7].
+
+### Construction of correlation network
+
+
+
 # Session information
 
 ```{r}
@@ -334,4 +317,4 @@ sessionInfo()
 
 [^6]: Ignatiadis, N., Klaus, B., Zaugg, J. B., & Huber, W. (2016). Data-driven hypothesis weighting increases detection power in genome-scale multiple testing. Nature Methods, 13(7), 577–580. http://doi.org/10.1038/nmeth.3885
 
-
+[^7]: Langfelder, P., & Horvath, S. (2008). WGCNA: an R package for weighted correlation network analysis. BMC Bioinformatics, 9, 559–559. http://doi.org/10.1186/1471-2105-9-559
