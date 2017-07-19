@@ -23,6 +23,29 @@ The `MetaboDiff` R package can be installed via Github. Please note that `Metabo
 
 ```{r, message=FALSE}
 library("devtools")
+library("gdata")
+library("MultiAssayExperiment")
+library("SummarizedExperiment")
+library("tidyverse")
+library("ggfortify")
+library("ComplexHeatmap")
+library("impute")
+library("vsn")
+library("HiveR")
+library("RColorBrewer")
+library("genefilter")
+library("cowplot")
+library("cluster")
+library("factoextra")
+library("FactoMineR")
+library("IHW")
+library("BiocGenerics")
+library("MetaboDiff")
+library("IHW")
+library("BiocGenerics")
+library("venneuler")
+library("devtools")
+library("WGCNA")
 install_github("andreasmock/MetaboDiff")
 ```
 
@@ -290,12 +313,69 @@ variance_boxplot(met,
 ```
 
 
-## Correlation network analysis 
+## Metabolic correlation network analysis
 
-This section describes the generation of a weighted correlation metabolic network using the `WGCNA` R package by Langfelder and Horvarth [^7].
+This section describes the generation and analysis of metabolic correlation networks. The workflow was adapted from the weighted gene co-expression analysis (WGCNA) proposed by Langfelder and Horvarth [^7].
 
-### Construction of correlation network
+### Construction dissiumilarity matrix
 
+The first step in constructing a metabolic correlation network is the creation of a dissimilarity matrix. Biweight midcorrelation was used as a similiarity measure as it is more robust to outliers than the absolute correlation coefficient [^8]. This choice is important, as we do not expect metabolites to be correlated in all patients. 
+
+The core concept of the so called "weighted" correlation analysis by Langfelder and Horvarth is that instead of defining a "hard" threshold (e.g. an absolute correlation coefficient > 0.8) to decide whether a node as connected to another, the adjacency `a` is defined by raising the similarity `s` to a power `beta` ('soft' threshold):
+
+$$a_{ij} = s_{ij}^\beta$$
+Lastly, the dissimilarity measure is defined by
+
+$$w_{ij} = 1 - a_{ij}$$
+
+For detailed rational of this approach, please see Zhang and Horvath[^9]. For metabolic networks, we identified that a beta value of 3 was the lowest power for which the scale-free topology of the topology was met.
+
+The function `diss_matrix` creates the dissimilarity measure for the `met` objects and saves it in the metadata slot
+
+```{r}
+met = diss_matrix(met)
+str(metadata(met))
+```
+
+### Identification of metabolic correlation modules
+
+To identify metabolic correlation modules, metabolites are next clustered based on the dissimilarity measure, where branches of the dendrogram correspond to modules.  Ultimately, modules are detected by applying a branch cutting method. We employed the dynamic branch cut method developed by Langfelder and colleagues [^9], as constant height cutoffs exhibit suboptimal performance on complicated dendrograms. 
+
+WGCNA of the 472 TCGA melanoma samples revealed 41 co-expression modules. All genes that are not significantly co-expressed within a module are summarized in an additional module 0 for further analysis.
+ 
+```{r, eval=FALSE}
+met = identify_modules(met, 
+                       min_module_size=5)
+
+#plot the dendrogram and corresponding colour bars underneath
+plotDendroAndColors(metadata(met)$tree, metadata(met)$module_colors, 'Module colors', dendroLabels = FALSE, hang = 0.03,
+                    addGuide = TRUE, guideHang = 0.05, main='')
+```
+
+The relation between the identified co-expression modules can be visualized by a dendrogram of their *eigengenes*. The module *eigengene* is defined as the first principal component of its expression matrix. It could be shown that the module= *eigengene* is highly correlated with the gene that has the highest intramodular connectivity[^6].
+
+```{r, eval=FALSE}
+library(ape)
+#calculate eigengenes
+MEs = moduleEigengenes(metadata(met)$diss_matrix, colors = metadata(met)$module_colors, excludeGrey = FALSE)$eigengenes
+
+#calculate dissimilarity of module eigengenes
+MEDiss = 1-cor(MEs);
+
+#cluster module eigengenes
+METree = hclust(as.dist(MEDiss), method = 'average');
+
+#plot the result with phytools package
+par(mar=c(2,2,2,2))
+plot.phylo(as.phylo(METree),
+           type = 'fan',
+           show.tip.label = FALSE, 
+           main='')
+tiplabels(frame = 'circle',
+          col='black', 
+          text=rep('',length(unique(metadata(met)$modules))), 
+          bg = levels(as.factor(metadata(met)$module_colors)))
+```
 
 
 # Session information
@@ -318,3 +398,7 @@ sessionInfo()
 [^6]: Ignatiadis, N., Klaus, B., Zaugg, J. B., & Huber, W. (2016). Data-driven hypothesis weighting increases detection power in genome-scale multiple testing. Nature Methods, 13(7), 577–580. http://doi.org/10.1038/nmeth.3885
 
 [^7]: Langfelder, P., & Horvath, S. (2008). WGCNA: an R package for weighted correlation network analysis. BMC Bioinformatics, 9, 559–559. http://doi.org/10.1186/1471-2105-9-559
+
+[^8]: Zheng, C.-H., Yuan, L., Sha, W., & Sun, Z.-L. (2014). Gene differential coexpression analysis based on biweight correlation and maximum clique. BMC Bioinformatics, 15 Suppl 15(Suppl 15), S3. http://doi.org/10.1186/1471-2105-15-S15-S3
+
+[^9]: Horvarth Paper.
