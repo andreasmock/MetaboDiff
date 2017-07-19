@@ -6,7 +6,8 @@ Author: Andreas Mock
 Maintainer: The package maintainer <yourself@somewhere.net>
 Description: Tool suite for the analysis of Metabolon data.
 Depends:
-    R (>= 3.4),
+    R (>= 3.4)
+Imports:
     gdata,
     Biobase,
     devtools,
