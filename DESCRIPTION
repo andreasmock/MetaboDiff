@@ -26,8 +26,7 @@ Imports:
     genefilter,
     FactoMineR,
     IHW,
-    BiocGenerics,
-    WGCNA
+    BiocGenerics
 License: MIT
 Encoding: UTF-8
 LazyData: true
