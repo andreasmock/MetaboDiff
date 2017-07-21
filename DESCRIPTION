@@ -21,11 +21,8 @@ Imports:
     IHW,
     genefilter,
     WGCNA,
-    dynamicTreeCut,
     ape,
-    AnnotationDbi,
-    GO.db,
-    preprocessCore
+    dynamicTreeCut
 License: MIT
 Encoding: UTF-8
 LazyData: true
