@@ -9,9 +9,9 @@
 diff_test <- function(met, group_factors) {
     metadata(met) = vector("list",0)
     for (i in 1:length(group_factors)){
-        df = rowttests(assays(met)[["norm_imputed"]],
+        df = genefilter::rowttests(assays(met)[["norm_imputed"]],
                        fac = as.factor(colData(met)[[group_factors[i]]]))
-        df_ihw = IHW::as.data.frame(ihw(df$p.value,
+        df_ihw = IHW::as.data.frame(IHW::ihw(df$p.value,
                                    as.numeric(apply(assays(met)[["norm_imputed"]],1,var)),
                                    alpha = 0.05,
                                    nbins = 20))

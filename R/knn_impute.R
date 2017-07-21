@@ -9,7 +9,7 @@
 knn_impute <- function(met, cutoff) {
     met_temp = met[["raw"]]
     met_temp=met_temp[!rowSums(is.na(assay(met_temp)))>(ncol(assay(met_temp))*cutoff),]
-    assay(met_temp) = impute.knn(assay(met_temp))$data
+    assay(met_temp) = impute::impute.knn(assay(met_temp))$data
     sampleMap_imp = sampleMap(met)
     levels(sampleMap_imp$assay) <- "imputed"
     met2 = c(x=met,

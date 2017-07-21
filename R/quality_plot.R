@@ -41,6 +41,6 @@ quality_plot <- function(met, group_factor, label_colors) {
                                fill=tumor_normal)) +
         geom_boxplot() + xlab("") + ggtitle("norm_imputed") +
         theme(axis.text.x=element_blank()) + ylab("vsn normalized and imputed abundance") + scale_fill_manual(values=label_colors)
-    plot_grid(plot1, plot2, plot3,plot4, align='h', labels=c('A', 'B','C', 'D'),label_size = 18)
+    cowplot::plot_grid(plot1, plot2, plot3,plot4, align='h', labels=c('A', 'B','C', 'D'),label_size = 18)
 }
 

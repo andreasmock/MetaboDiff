@@ -21,33 +21,9 @@ Comparative non-targeted metabolomics comes of age through an increasing number 
 
 The `MetaboDiff` R package can be installed via Github. Please note that `MetaboDiff` requires an R version >= 3.4.
 
-```{r, message=FALSE}
+```{r, eval=FALSE}
 library("devtools")
-library("gdata")
-library("MultiAssayExperiment")
-library("SummarizedExperiment")
-library("tidyverse")
-library("ggfortify")
-library("ComplexHeatmap")
-library("impute")
-library("vsn")
-library("HiveR")
-library("RColorBrewer")
-library("genefilter")
-library("cowplot")
-library("cluster")
-library("factoextra")
-library("FactoMineR")
-library("IHW")
-library("BiocGenerics")
-library("MetaboDiff")
-library("IHW")
-library("BiocGenerics")
-library("venneuler")
-library("devtools")
-library("WGCNA")
-library("ape")
-#install_github("andreasmock/MetaboDiff")
+install_github("andreasmock/MetaboDiff")
 ```
 
 and once installed loaded by
@@ -87,7 +63,7 @@ SummarizedExperiment objects consisting of:
 
 #### Creation of assay object containing metabolomic data
 
-```{r, eval=TRUE}
+```{r}
 assay = apply(data[3:nrow(data),8:ncol(data)],2,as.numeric)
 colnames(assay) = paste0(rep("sample",ncol(assay)),1:ncol(assay))
 rownames(assay) = paste0(rep("met",nrow(assay)),1:nrow(assay))
@@ -240,7 +216,7 @@ quality_plot(met,
 ## Principal component analysis (PCA)
 
 ```{r}
-metadata(met)$res_pca = PCA(t(assays(met)[["norm_imputed"]]), 
+metadata(met)$res_pca = FactoMineR::PCA(t(assays(met)[["norm_imputed"]]), 
               scale.unit = TRUE,
               graph=FALSE)
 ```
@@ -248,13 +224,13 @@ metadata(met)$res_pca = PCA(t(assays(met)[["norm_imputed"]]),
 Visualize percentage of explained variances for the first ten principal components i.e. dimensions.
 
 ```{r}
-fviz_screeplot(metadata(met)$res_pca , addlabels=TRUE)
+factoextra::fviz_screeplot(metadata(met)$res_pca , addlabels=TRUE)
 ```
 
 PCA plot.
 
 ```{r}
-fviz_pca_ind(metadata(met)$res_pca,
+factoextra::fviz_pca_ind(metadata(met)$res_pca,
              label="none",
              habillage=colData(met)[["tumor_normal"]],
              palette=c("darkseagreen","dodgerblue"),
@@ -275,7 +251,7 @@ met = diff_test(met,
 The results of the hypothesis testing is saved in the `metadata` splot of the MultiAssayExperiment object. 
 
 ```{r}
-str(metadata(met))
+str(metadata(met), max.level=2)
 ```
 
 The columns of the result data frame are the unadjusted p-value (pval), the adjusted p-value by independent hypothesis weighting (adj_pval), the  Fold-Change between groups (fold_change) and the variance (var).
@@ -335,7 +311,7 @@ The function `diss_matrix` creates the dissimilarity measure for the `met` objec
 
 ```{r}
 met = diss_matrix(met)
-str(metadata(met))
+str(metadata(met), max.level=2)
 ```
 
 ### Identification of metabolic correlation modules
@@ -351,7 +327,7 @@ met = identify_modules(met,
 
 ```{r}
 #plot the dendrogram and corresponding colour bars underneath
-plotDendroAndColors(metadata(met)$tree, 
+WGCNA::plotDendroAndColors(metadata(met)$tree, 
                     metadata(met)$module_colors, 
                     'Module colors', 
                     dendroLabels = FALSE, 
@@ -364,11 +340,11 @@ The relation between the identified co-expression modules can be visualized by a
 
 ```{r}
 par(mar=c(2,2,2,2))
-plot.phylo(as.phylo(metadata(met)$METree),
+ape::plot.phylo(ape::as.phylo(metadata(met)$METree),
            type = 'fan',
            show.tip.label = FALSE, 
            main='')
-tiplabels(frame = 'circle',
+ape::tiplabels(frame = 'circle',
           col='black', 
           text=rep('',length(unique(metadata(met)$modules))), 
           bg = levels(as.factor(metadata(met)$module_colors)))

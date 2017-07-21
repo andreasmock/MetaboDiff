@@ -6,27 +6,23 @@ Author: Andreas Mock
 Maintainer: The package maintainer <yourself@somewhere.net>
 Description: Tool suite for the analysis of Metabolon data.
 Depends:
-    R (>= 3.4)
+    R (>= 3.4),
+    SummarizedExperiment,
+    MultiAssayExperiment,
+    ComplexHeatmap,
+    ggplot2
 Imports:
     gdata,
-    Biobase,
-    devtools,
-    MultiAssayExperiment,
-    SummarizedExperiment,
-    tidyverse,
-    ggfortify,
-    ComplexHeatmap,
     impute,
     vsn,
-    RColorBrewer,
-    plyr,
     cowplot,
-    cluster,
-    factoextra,
-    genefilter,
     FactoMineR,
+    factoextra,
     IHW,
-    BiocGenerics
+    genefilter,
+    WGCNA,
+    dynamicTreeCut,
+    ape
 License: MIT
 Encoding: UTF-8
 LazyData: true

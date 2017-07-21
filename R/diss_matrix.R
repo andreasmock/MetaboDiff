@@ -7,7 +7,7 @@
 #' @export
 diss_matrix <- function(met) {
     mat = t(assay(met[["norm_imputed"]]))
-    s = abs(bicor(mat))
+    s = abs(WGCNA::bicor(mat))
     beta = 3
     a = s^beta
     w = 1-a

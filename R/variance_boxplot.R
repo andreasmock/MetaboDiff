@@ -13,6 +13,6 @@ variance_boxplot <- function(met, rowAnnotation) {
     ggplot(df,
            mapping=aes(x=pathway_ordered,
                        y=value,
-                       fill=pathway_ordered)) + coord_flip() +
+                       fill=pathway_ordered)) + coord_flip() + theme_minimal() +
         geom_boxplot() + xlab("") + guides(fill=FALSE) + ylab("vsn normalized abundance")
 }

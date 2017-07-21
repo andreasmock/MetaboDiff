@@ -11,13 +11,13 @@ identify_modules <- function(met, min_module_size) {
     metadata(met)$tree = hclust(as.dist(w), method = 'average')
 
     #module identification using dynamic tree cut algorithm
-    metadata(met)$modules = cutreeDynamic(dendro =  metadata(met)$tree, distM = w, deepSplit = 4, pamRespectsDendro = FALSE,
+    metadata(met)$modules = dynamicTreeCut::cutreeDynamic(dendro =  metadata(met)$tree, distM = w, deepSplit = 4, pamRespectsDendro = FALSE,
                             minClusterSize = min_module_size)
     #assign module colours
-    metadata(met)$module_colors = labels2colors(metadata(met)$modules)
+    metadata(met)$module_colors = WGCNA::labels2colors(metadata(met)$modules)
 
     #calculate eigengenes
-    metadata(met)$MEs = moduleEigengenes(metadata(met)$diss_matrix,
+    metadata(met)$MEs = WGCNA::moduleEigengenes(metadata(met)$diss_matrix,
                            colors = metadata(met)$module_colors,
                            excludeGrey = FALSE)$eigengenes
 
