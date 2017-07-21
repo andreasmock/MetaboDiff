@@ -19,5 +19,4 @@ Impute metabolomic data by k-nearest neighbour imputation
 }
 \examples{
 knn_impute(met_example, cutoff=0.4)
-
 }

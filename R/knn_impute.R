@@ -5,7 +5,7 @@
 #' @return MultiAssayExperiment object with slots "raw" and "imputed"
 #' @examples
 #' knn_impute(met_example, cutoff=0.4)
-#'
+#' @export
 knn_impute <- function(met, cutoff) {
     met_temp = met[["raw"]]
     met_temp=met_temp[!rowSums(is.na(assay(met_temp)))>(ncol(assay(met_temp))*cutoff),]

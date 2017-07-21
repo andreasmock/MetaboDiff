@@ -6,6 +6,7 @@
 #' @return Volcano plot of differential analysis
 #' @examples
 #' volcano_plot(met_example, group_factor="tumor_normal", label_colors=c("darkseagreen","dodgerblue"))
+#' @export
 volcano_plot <- function(met, group_factor, label_colors) {
     df=metadata(met)[[paste0("ttest_", group_factor)]]
     lv = levels(as.factor(colData(met)[[group_factor]]))

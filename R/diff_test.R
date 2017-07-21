@@ -5,6 +5,7 @@
 #' @return MultiAssayExperiment object with additional metadata slot containing the results of the comparative analysis
 #' @examples
 #' diff_test(met_example, group_factors = c("tumor_normal","random_gender"))
+#' @export
 diff_test <- function(met, group_factors) {
     metadata(met) = vector("list",0)
     for (i in 1:length(group_factors)){

@@ -4,6 +4,7 @@
 #' @return MultiAssayExperiment object with slots "raw", "imputed", "norm" and "norm_imputed" and metadata slot containing the results of the differential analysis and dissimilarity matrix
 #' @examples
 #' diss_matrix(met_example)
+#' @export
 diss_matrix <- function(met) {
     mat = t(assay(met[["norm_imputed"]]))
     s = abs(bicor(mat))

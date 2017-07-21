@@ -4,6 +4,7 @@
 #' @return MultiAssayExperiment object with slots "raw", "imputed", "norm" and "norm_imputed"
 #' @examples
 #' normalize_met(met)
+#' @export
 normalize_met <- function(met) {
     raw_temp = met[["raw"]]
     imputed_temp = met[["imputed"]]

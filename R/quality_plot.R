@@ -6,6 +6,7 @@
 #' @return Quality plot of processing steps
 #' @examples
 #' quality_plot(met_example, group_factor="tumor_normal", label_colors=c("darkseagreen","dodgerblue"))
+#' @export
 quality_plot <- function(met, group_factor, label_colors) {
     mdata = as.data.frame(longFormat(met[,,1],colDataCols=group_factor))
     mdata$value = log2(mdata$value)
@@ -34,7 +35,6 @@ quality_plot <- function(met, group_factor, label_colors) {
         theme(axis.text.x=element_blank()) + ylab("vsn normalized abundance") + scale_fill_manual(values=label_colors)
 
     mdata = as.data.frame(longFormat(met[,,4],colDataCols=group_factor))
-    mdata$value = log2(mdata$value)
     plot4 = ggplot(mdata,
                    mapping=aes(x=colname,
                                y=value,

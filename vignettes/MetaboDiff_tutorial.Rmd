@@ -46,7 +46,8 @@ library("BiocGenerics")
 library("venneuler")
 library("devtools")
 library("WGCNA")
-install_github("andreasmock/MetaboDiff")
+library("ape")
+#install_github("andreasmock/MetaboDiff")
 ```
 
 and once installed loaded by
@@ -239,7 +240,7 @@ quality_plot(met,
 ## Principal component analysis (PCA)
 
 ```{r}
-res_pca = PCA(t(assays(met)[["norm_imputed"]]), 
+metadata(met)$res_pca = PCA(t(assays(met)[["norm_imputed"]]), 
               scale.unit = TRUE,
               graph=FALSE)
 ```
@@ -247,13 +248,13 @@ res_pca = PCA(t(assays(met)[["norm_imputed"]]),
 Visualize percentage of explained variances for the first ten principal components i.e. dimensions.
 
 ```{r}
-fviz_screeplot(res_pca, addlabels=TRUE)
+fviz_screeplot(metadata(met)$res_pca , addlabels=TRUE)
 ```
 
 PCA plot.
 
 ```{r}
-fviz_pca_ind(res_pca,
+fviz_pca_ind(metadata(met)$res_pca,
              label="none",
              habillage=colData(met)[["tumor_normal"]],
              palette=c("darkseagreen","dodgerblue"),
@@ -341,33 +342,29 @@ str(metadata(met))
 
 To identify metabolic correlation modules, metabolites are next clustered based on the dissimilarity measure, where branches of the dendrogram correspond to modules.  Ultimately, modules are detected by applying a branch cutting method. We employed the dynamic branch cut method developed by Langfelder and colleagues [^9], as constant height cutoffs exhibit suboptimal performance on complicated dendrograms. 
 
-WGCNA of the 472 TCGA melanoma samples revealed 41 co-expression modules. All genes that are not significantly co-expressed within a module are summarized in an additional module 0 for further analysis.
+
  
-```{r, eval=FALSE}
+```{r}
 met = identify_modules(met, 
                        min_module_size=5)
+```
 
+```{r}
 #plot the dendrogram and corresponding colour bars underneath
-plotDendroAndColors(metadata(met)$tree, metadata(met)$module_colors, 'Module colors', dendroLabels = FALSE, hang = 0.03,
-                    addGuide = TRUE, guideHang = 0.05, main='')
+plotDendroAndColors(metadata(met)$tree, 
+                    metadata(met)$module_colors, 
+                    'Module colors', 
+                    dendroLabels = FALSE, 
+                    hang = 0.03,
+                    addGuide = TRUE, 
+                    guideHang = 0.05, main='')
 ```
 
 The relation between the identified co-expression modules can be visualized by a dendrogram of their *eigengenes*. The module *eigengene* is defined as the first principal component of its expression matrix. It could be shown that the module= *eigengene* is highly correlated with the gene that has the highest intramodular connectivity[^6].
 
-```{r, eval=FALSE}
-library(ape)
-#calculate eigengenes
-MEs = moduleEigengenes(metadata(met)$diss_matrix, colors = metadata(met)$module_colors, excludeGrey = FALSE)$eigengenes
-
-#calculate dissimilarity of module eigengenes
-MEDiss = 1-cor(MEs);
-
-#cluster module eigengenes
-METree = hclust(as.dist(MEDiss), method = 'average');
-
-#plot the result with phytools package
+```{r}
 par(mar=c(2,2,2,2))
-plot.phylo(as.phylo(METree),
+plot.phylo(as.phylo(metadata(met)$METree),
            type = 'fan',
            show.tip.label = FALSE, 
            main='')
@@ -376,6 +373,8 @@ tiplabels(frame = 'circle',
           text=rep('',length(unique(metadata(met)$modules))), 
           bg = levels(as.factor(metadata(met)$module_colors)))
 ```
+
+
 
 
 # Session information

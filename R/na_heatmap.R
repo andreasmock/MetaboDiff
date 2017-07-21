@@ -6,6 +6,7 @@
 #' @return heatmap visualizing missing metabolites across the samples
 #' @examples
 #' na_heatmap(met_example, group_factor="tumor_normal", label_colors=c("darkseagreen","dodgerblue"))
+#' @export
 na_heatmap = function(met, group_factor, label_colors) {
     met_na = is.na(assay(met))*1
     row_na = apply(met_na,1,sum)/ncol(met_na)
@@ -19,7 +20,8 @@ na_heatmap = function(met, group_factor, label_colors) {
                                                         gp=gpar(fill="brown",
                                                                 col="brown"),
                                                         axis=TRUE,
-                                                        border=FALSE))
+                                                        border=FALSE),
+                                   annotation_height=c(1,3))
     rowanno = rowAnnotation(barplot=row_anno_barplot(row_na[order(row_na)],
                                                      gp=gpar(fill="brown",
                                                              col="brown"),

@@ -17,5 +17,4 @@ Annotation using Small Molecule Pathway Database (SMPDB)
 }
 \examples{
 get_SMPDBanno(as.data.frame(rowData(met_example[["raw"]]))[,1:7],column_kegg_id=6,column_hmdb_id=7,column_chebi_id=NA)
-
 }

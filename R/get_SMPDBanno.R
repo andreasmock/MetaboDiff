@@ -4,7 +4,7 @@
 #' @return dataframe containing SMPDB annotation for metabolite identifiers.
 #' @examples
 #' get_SMPDBanno(as.data.frame(rowData(met_example[["raw"]]))[,1:7],column_kegg_id=6,column_hmdb_id=7,column_chebi_id=NA)
-#'
+#' @export
 get_SMPDBanno <- function(rowData,
                           column_kegg_id,
                           column_hmdb_id,

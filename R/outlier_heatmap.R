@@ -6,6 +6,7 @@
 #' @return heatmap to visualize outliers in the study set
 #' @examples
 #' outlier_heatmap(met_example, group_factor="tumor_normal", label_colors=c("darkseagreen","dodgerblue"))
+#' @export
 outlier_heatmap = function(met, group_factor, label_colors) {
     sample_labels = as.factor(colData(met)[[group_factor]])
     met_na = is.na(assay(met))*1
