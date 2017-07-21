@@ -4,10 +4,12 @@ Andreas Mock
 Experimental Neurosurgery, Heidelberg University Hospital,
 Division of Applied Bioinformatics, German Cancer Research Center (DFKZ) Heidelberg &
 Department of Medical Oncology, National Center for Tumor Diseases (NCT) Heidelberg
-2017-07-17
+2017-07-21
 
 -   [Introduction](#introduction)
 -   [Installation](#installation)
+    -   [Install dependencies](#install-dependencies)
+    -   [Install MetaboDiff](#install-metabodiff)
 -   [Part I: Data processing](#part-i-data-processing)
     -   [Reading data and annotation](#reading-data-and-annotation)
     -   [Imputation of missing values](#imputation-of-missing-values)
@@ -19,7 +21,7 @@ Department of Medical Oncology, National Center for Tumor Diseases (NCT) Heidelb
     -   [Principal component analysis (PCA)](#principal-component-analysis-pca)
     -   [Hypothesis testing](#hypothesis-testing)
     -   [Pathway analysis](#pathway-analysis)
-    -   [Correlation network analysis](#correlation-network-analysis)
+    -   [Metabolic correlation network analysis](#metabolic-correlation-network-analysis)
 -   [Session information](#session-information)
 -   [References](#references)
 
@@ -31,10 +33,25 @@ Comparative non-targeted metabolomics comes of age through an increasing number 
 Installation
 ============
 
-The `MetaboDiff` R package can be installed via Github
+The `MetaboDiff` R package can be installed via Github. Please note that `MetaboDiff` requires an R version &gt;= 3.4.
+
+Install dependencies
+--------------------
+
+Please note that CRAN occasionally fails to compile the `WGCNA` package for Mac OS X. Hence, we recommend to install the package before installing `MetaboDiff`:
 
 ``` r
-library(devtools)
+install.packages("WGCNA")
+```
+
+If asked, install the package from source. Please refer to the [developer page](https://labs.genetics.ucla.edu/horvath/CoexpressionNetwork/Rpackages/WGCNA/)
+if you encounter problems installing the `WGCNA` package.
+
+Install MetaboDiff
+------------------
+
+``` r
+library("devtools")
 install_github("andreasmock/MetaboDiff")
 ```
 
@@ -55,7 +72,7 @@ Reading data and annotation
 The example data is derived from a study by Priolo and colleagues in which they used the service of Metabolon® to compare the tissue metabolome of 40 prostate cancers with 16 normal prostate specimens [1]. The table summarizing the relative metabolic measurements can be loaded from the journal homepage as follows:
 
 ``` r
-data = as.matrix(read.xls("http://cancerres.aacrjournals.org/highwire/filestream/290852/field_highwire_adjunct_files/4/131853_1_supp_2658512_nbpsn6.xlsx",
+data = as.matrix(gdata::read.xls("http://cancerres.aacrjournals.org/highwire/filestream/290852/field_highwire_adjunct_files/4/131853_1_supp_2658512_nbpsn6.xlsx",
                           sheet=5,
                           na.strings = ""))
 ```
@@ -203,7 +220,7 @@ na_heatmap(met,
            label_colors=c("darkseagreen","dodgerblue"))
 ```
 
-![](MetaboDiff_tutorial_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-12-1.png)
+![](MetaboDiff_tutorial_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-13-1.png)
 
 The example data supports the need for data imputation. It could be shown that k-nearest neighbor imputation minimizes the effects on the normality and variance of the data as long as the number of missing data does not exceed 40% [5].
 
@@ -240,7 +257,7 @@ outlier_heatmap(met,
                 label_colors=c("darkseagreen","dodgerblue"))
 ```
 
-![](MetaboDiff_tutorial_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-14-1.png)
+![](MetaboDiff_tutorial_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-15-1.png)
 
 The imputed data of the example study set displays a cluster of 5 samples (cluster 1) with an in average lower relative metabolite abundance. Due to the lack of batch information, this cannot be investigted further at this time. To demonstrate, how a cluster can be removed, we apply the function `remove_cluster` to remove cluster 1:
 
@@ -319,7 +336,7 @@ quality_plot(met,
              label_colors=c("darkseagreen","dodgerblue"))
 ```
 
-![](MetaboDiff_tutorial_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-18-1.png)
+![](MetaboDiff_tutorial_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-19-1.png)
 
 Part II: Data analysis
 ======================
@@ -328,7 +345,7 @@ Principal component analysis (PCA)
 ----------------------------------
 
 ``` r
-res_pca = PCA(t(assays(met)[["norm_imputed"]]), 
+metadata(met)$res_pca = FactoMineR::PCA(t(assays(met)[["norm_imputed"]]), 
               scale.unit = TRUE,
               graph=FALSE)
 ```
@@ -336,22 +353,22 @@ res_pca = PCA(t(assays(met)[["norm_imputed"]]),
 Visualize percentage of explained variances for the first ten principal components i.e. dimensions.
 
 ``` r
-fviz_screeplot(res_pca, addlabels=TRUE)
+factoextra::fviz_screeplot(metadata(met)$res_pca , addlabels=TRUE)
 ```
 
-![](MetaboDiff_tutorial_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-20-1.png)
+![](MetaboDiff_tutorial_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-21-1.png)
 
 PCA plot.
 
 ``` r
-fviz_pca_ind(res_pca,
+factoextra::fviz_pca_ind(metadata(met)$res_pca,
              label="none",
              habillage=colData(met)[["tumor_normal"]],
              palette=c("darkseagreen","dodgerblue"),
              addEllipses = TRUE)
 ```
 
-![](MetaboDiff_tutorial_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-21-1.png)
+![](MetaboDiff_tutorial_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-22-1.png)
 
 Hypothesis testing
 ------------------
@@ -368,7 +385,7 @@ met = diff_test(met,
 The results of the hypothesis testing is saved in the `metadata` splot of the MultiAssayExperiment object.
 
 ``` r
-str(metadata(met))
+str(metadata(met), max.level=2)
 ```
 
     ## List of 2
@@ -393,7 +410,7 @@ volcano_plot(met,
              label_colors=c("darkseagreen","dodgerblue"))
 ```
 
-![](MetaboDiff_tutorial_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-24-1.png)
+![](MetaboDiff_tutorial_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-25-1.png)
 
 As a sanity check, we also display the volcano plot for the random grouping "random\_gender" for which we would not expect the same number of significant metabolites.
 
@@ -403,7 +420,7 @@ volcano_plot(met,
              label_colors=c("brown","orange"))
 ```
 
-![](MetaboDiff_tutorial_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-25-1.png)
+![](MetaboDiff_tutorial_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-26-1.png)
 
 As expected, no metabolites was significant different between the randomly assigned grouping male vs. female after multiple testing with a cutoff of p\_adjust &lt; 0.05.
 
@@ -435,10 +452,92 @@ variance_boxplot(met,
                  rowAnnotation = "SMPDB|Pathway.Name")
 ```
 
-![](MetaboDiff_tutorial_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-27-1.png)
+![](MetaboDiff_tutorial_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-28-1.png)
 
-Correlation network analysis
-----------------------------
+Metabolic correlation network analysis
+--------------------------------------
+
+This section describes the generation and analysis of metabolic correlation networks. The workflow was adapted from the weighted gene co-expression analysis (WGCNA) proposed by Langfelder and Horvarth [7].
+
+### Construction dissiumilarity matrix
+
+The first step in constructing a metabolic correlation network is the creation of a dissimilarity matrix. Biweight midcorrelation was used as a similiarity measure as it is more robust to outliers than the absolute correlation coefficient [8]. This choice is important, as we do not expect metabolites to be correlated in all patients.
+
+The core concept of the so called "weighted" correlation analysis by Langfelder and Horvarth is that instead of defining a "hard" threshold (e.g. an absolute correlation coefficient &gt; 0.8) to decide whether a node as connected to another, the adjacency `a` is defined by raising the similarity `s` to a power `beta` ('soft' threshold):
+
+*a*<sub>*i**j*</sub> = *s*<sub>*i**j*</sub><sup>*β*</sup>
+ Lastly, the dissimilarity measure is defined by
+
+*w*<sub>*i**j*</sub> = 1 − *a*<sub>*i**j*</sub>
+
+For detailed rational of this approach, please see Zhang and Horvath[9]. For metabolic networks, we identified that a beta value of 3 was the lowest power for which the scale-free topology of the topology was met.
+
+The function `diss_matrix` creates the dissimilarity measure for the `met` objects and saves it in the metadata slot
+
+``` r
+met = diss_matrix(met)
+```
+
+    ## 
+
+``` r
+str(metadata(met), max.level=2)
+```
+
+    ## List of 3
+    ##  $ ttest_tumor_normal :'data.frame': 238 obs. of  4 variables:
+    ##   ..$ pval       : num [1:238] 0.0206 0.7808 0.0832 0.0432 0.5859 ...
+    ##   ..$ adj_pval   : num [1:238] 0.18 0.911 0.219 0.158 0.716 ...
+    ##   ..$ fold_change: num [1:238] 0.2872 0.0366 -0.3936 -0.5391 -0.1646 ...
+    ##   ..$ var        : num [1:238] 0.264 0.287 0.872 1.21 1.516 ...
+    ##  $ ttest_random_gender:'data.frame': 238 obs. of  4 variables:
+    ##   ..$ pval       : num [1:238] 0.2318 0.8626 0.4048 0.0121 0.2111 ...
+    ##   ..$ adj_pval   : num [1:238] 0.83 0.959 0.862 0.386 0.83 ...
+    ##   ..$ fold_change: num [1:238] 0.1372 0.0208 -0.1742 -0.607 -0.3438 ...
+    ##   ..$ var        : num [1:238] 0.264 0.287 0.872 1.21 1.516 ...
+    ##  $ diss_matrix        : num [1:238, 1:238] 0 0.964 0.999 0.999 0.996 ...
+    ##   ..- attr(*, "dimnames")=List of 2
+
+### Identification of metabolic correlation modules
+
+To identify metabolic correlation modules, metabolites are next clustered based on the dissimilarity measure, where branches of the dendrogram correspond to modules. Ultimately, modules are detected by applying a branch cutting method. We employed the dynamic branch cut method developed by Langfelder and colleagues [10], as constant height cutoffs exhibit suboptimal performance on complicated dendrograms.
+
+``` r
+met = identify_modules(met, 
+                       min_module_size=5)
+```
+
+    ##  ..cutHeight not given, setting it to 0.991  ===>  99% of the (truncated) height range in dendro.
+    ##  ..done.
+
+``` r
+#plot the dendrogram and corresponding colour bars underneath
+WGCNA::plotDendroAndColors(metadata(met)$tree, 
+                    metadata(met)$module_colors, 
+                    'Module colors', 
+                    dendroLabels = FALSE, 
+                    hang = 0.03,
+                    addGuide = TRUE, 
+                    guideHang = 0.05, main='')
+```
+
+![](MetaboDiff_tutorial_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-31-1.png)
+
+The relation between the identified co-expression modules can be visualized by a dendrogram of their *eigengenes*. The module *eigengene* is defined as the first principal component of its expression matrix. It could be shown that the module= *eigengene* is highly correlated with the gene that has the highest intramodular connectivity[11].
+
+``` r
+par(mar=c(2,2,2,2))
+ape::plot.phylo(ape::as.phylo(metadata(met)$METree),
+           type = 'fan',
+           show.tip.label = FALSE, 
+           main='')
+ape::tiplabels(frame = 'circle',
+          col='black', 
+          text=rep('',length(unique(metadata(met)$modules))), 
+          bg = levels(as.factor(metadata(met)$module_colors)))
+```
+
+![](MetaboDiff_tutorial_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-32-1.png)
 
 Session information
 ===================
@@ -463,79 +562,83 @@ sessionInfo()
     ##  [8] datasets  methods   base     
     ## 
     ## other attached packages:
-    ##  [1] MetaboDiff_0.1.0           IHW_1.4.0                 
-    ##  [3] genefilter_1.58.1          FactoMineR_1.36           
-    ##  [5] factoextra_1.0.4           cluster_2.0.6             
-    ##  [7] cowplot_0.7.0              plyr_1.8.4                
-    ##  [9] RColorBrewer_1.1-2         HiveR_0.2.55              
-    ## [11] vsn_3.44.0                 impute_1.50.1             
-    ## [13] ComplexHeatmap_1.14.0      ggfortify_0.4.1           
-    ## [15] dplyr_0.5.0                purrr_0.2.2.2             
-    ## [17] readr_1.1.1                tidyr_0.6.3               
-    ## [19] tibble_1.3.3               ggplot2_2.2.1             
-    ## [21] tidyverse_1.1.1            SummarizedExperiment_1.6.3
-    ## [23] DelayedArray_0.2.4         matrixStats_0.52.2        
-    ## [25] Biobase_2.36.2             GenomicRanges_1.28.2      
-    ## [27] GenomeInfoDb_1.12.0        IRanges_2.10.1            
-    ## [29] S4Vectors_0.14.1           BiocGenerics_0.22.0       
-    ## [31] MultiAssayExperiment_1.2.1 gdata_2.18.0              
-    ## [33] devtools_1.13.2           
+    ##  [1] rmarkdown_1.6              MetaboDiff_0.1.0          
+    ##  [3] ComplexHeatmap_1.14.0      SummarizedExperiment_1.6.3
+    ##  [5] MultiAssayExperiment_1.2.1 venneuler_1.1-0           
+    ##  [7] rJava_0.9-8                HiveR_0.2.55              
+    ##  [9] dplyr_0.5.0                purrr_0.2.2.2             
+    ## [11] readr_1.1.1                tidyr_0.6.3               
+    ## [13] tibble_1.3.3               DelayedArray_0.2.4        
+    ## [15] matrixStats_0.52.2         Biobase_2.36.2            
+    ## [17] GenomicRanges_1.28.2       GenomeInfoDb_1.12.0       
+    ## [19] IRanges_2.10.2             S4Vectors_0.14.3          
+    ## [21] BiocGenerics_0.22.0        devtools_1.13.2           
+    ## [23] ggplot2_2.2.1              ape_4.1                   
+    ## [25] fastcluster_1.1.22         dynamicTreeCut_1.63-1     
+    ## [27] BiocInstaller_1.26.0      
     ## 
     ## loaded via a namespace (and not attached):
-    ##   [1] readxl_1.0.0            backports_1.1.0        
-    ##   [3] circlize_0.4.0          lazyeval_0.2.0         
-    ##   [5] shinydashboard_0.6.1    splines_3.4.0          
-    ##   [7] lpsymphony_1.4.1        digest_0.6.12          
-    ##   [9] BiocInstaller_1.26.0    htmltools_0.3.6        
-    ##  [11] viridis_0.4.0           magrittr_1.5           
-    ##  [13] memoise_1.1.0           limma_3.32.2           
-    ##  [15] annotate_1.54.0         modelr_0.1.0           
-    ##  [17] jpeg_0.1-8              colorspace_1.3-2       
-    ##  [19] rvest_0.3.2             ggrepel_0.6.5          
-    ##  [21] haven_1.0.0             crayon_1.3.2           
-    ##  [23] RCurl_1.95-4.8          jsonlite_1.5           
-    ##  [25] roxygen2_6.0.1          survival_2.41-3        
-    ##  [27] gtable_0.2.0            zlibbioc_1.22.0        
-    ##  [29] XVector_0.16.0          UpSetR_1.3.3           
-    ##  [31] GetoptLong_0.1.6        kernlab_0.9-25         
-    ##  [33] shape_1.4.2             prabclus_2.2-6         
-    ##  [35] DEoptimR_1.0-8          scales_0.4.1           
-    ##  [37] mvtnorm_1.0-6           DBI_0.6-1              
-    ##  [39] Rcpp_0.12.11            viridisLite_0.2.0      
-    ##  [41] xtable_1.8-2            flashClust_1.01-2      
-    ##  [43] foreign_0.8-68          mclust_5.3             
-    ##  [45] preprocessCore_1.38.1   httr_1.2.1             
-    ##  [47] fpc_2.1-10              modeltools_0.2-21      
-    ##  [49] XML_3.98-1.7            flexmix_2.3-14         
-    ##  [51] nnet_7.3-12             labeling_0.3           
-    ##  [53] rlang_0.1.1             reshape2_1.4.2         
-    ##  [55] AnnotationDbi_1.38.0    munsell_0.4.3          
-    ##  [57] cellranger_1.1.0        tools_3.4.0            
-    ##  [59] RSQLite_1.1-2           broom_0.4.2            
-    ##  [61] fdrtool_1.2.15          evaluate_0.10          
-    ##  [63] stringr_1.2.0           yaml_2.1.14            
-    ##  [65] knitr_1.16              robustbase_0.92-7      
-    ##  [67] dendextend_1.5.2        nlme_3.1-131           
-    ##  [69] whisker_0.3-2           mime_0.5               
-    ##  [71] slam_0.1-40             leaps_3.0              
-    ##  [73] xml2_1.1.1              compiler_3.4.0         
-    ##  [75] curl_2.6                png_0.1-7              
-    ##  [77] affyio_1.46.0           stringi_1.1.5          
-    ##  [79] desc_1.1.0              forcats_0.2.0          
-    ##  [81] lattice_0.20-35         trimcluster_0.1-2      
-    ##  [83] Matrix_1.2-10           commonmark_1.2         
-    ##  [85] psych_1.7.5             GlobalOptions_0.0.12   
-    ##  [87] bitops_1.0-6            httpuv_1.3.3           
-    ##  [89] R6_2.2.1                affy_1.54.0            
-    ##  [91] gridExtra_2.2.1         MASS_7.3-47            
-    ##  [93] gtools_3.5.0            assertthat_0.2.0       
-    ##  [95] rprojroot_1.2           rjson_0.2.15           
-    ##  [97] withr_1.0.2             mnormt_1.5-5           
-    ##  [99] GenomeInfoDbData_0.99.0 diptest_0.75-7         
-    ## [101] hms_0.3                 class_7.3-14           
-    ## [103] rmarkdown_1.6           ggpubr_0.1.4           
-    ## [105] git2r_0.18.0            scatterplot3d_0.3-40   
-    ## [107] shiny_1.0.3             lubridate_1.6.0
+    ##   [1] backports_1.1.0         circlize_0.4.0         
+    ##   [3] Hmisc_4.0-3             plyr_1.8.4             
+    ##   [5] lazyeval_0.2.0          shinydashboard_0.6.1   
+    ##   [7] splines_3.4.0           robust_0.4-18          
+    ##   [9] lpsymphony_1.4.1        digest_0.6.12          
+    ##  [11] foreach_1.4.3           htmltools_0.3.6        
+    ##  [13] viridis_0.4.0           GO.db_3.4.1            
+    ##  [15] gdata_2.18.0            checkmate_1.8.2        
+    ##  [17] magrittr_1.5            memoise_1.1.0          
+    ##  [19] fit.models_0.5-14       cluster_2.0.6          
+    ##  [21] doParallel_1.0.10       limma_3.32.2           
+    ##  [23] annotate_1.54.0         jpeg_0.1-8             
+    ##  [25] colorspace_1.3-2        rrcov_1.4-3            
+    ##  [27] blob_1.1.0              ggrepel_0.6.5          
+    ##  [29] RCurl_1.95-4.8          genefilter_1.58.1      
+    ##  [31] impute_1.50.1           survival_2.41-3        
+    ##  [33] iterators_1.0.8         gtable_0.2.0           
+    ##  [35] zlibbioc_1.22.0         XVector_0.16.0         
+    ##  [37] UpSetR_1.3.3            GetoptLong_0.1.6       
+    ##  [39] kernlab_0.9-25          shape_1.4.2            
+    ##  [41] prabclus_2.2-6          DEoptimR_1.0-8         
+    ##  [43] scales_0.4.1            vsn_3.44.0             
+    ##  [45] mvtnorm_1.0-6           DBI_0.7                
+    ##  [47] IHW_1.4.0               Rcpp_0.12.11           
+    ##  [49] htmlTable_1.9           viridisLite_0.2.0      
+    ##  [51] xtable_1.8-2            flashClust_1.01-2      
+    ##  [53] foreign_0.8-68          bit_1.1-12             
+    ##  [55] mclust_5.3              preprocessCore_1.38.1  
+    ##  [57] Formula_1.2-1           htmlwidgets_0.8        
+    ##  [59] RColorBrewer_1.1-2      fpc_2.1-10             
+    ##  [61] acepack_1.4.1           modeltools_0.2-21      
+    ##  [63] factoextra_1.0.4        pkgconfig_2.0.1        
+    ##  [65] XML_3.98-1.7            flexmix_2.3-14         
+    ##  [67] nnet_7.3-12             labeling_0.3           
+    ##  [69] rlang_0.1.1             reshape2_1.4.2         
+    ##  [71] AnnotationDbi_1.38.1    munsell_0.4.3          
+    ##  [73] tools_3.4.0             RSQLite_2.0            
+    ##  [75] fdrtool_1.2.15          evaluate_0.10          
+    ##  [77] stringr_1.2.0           yaml_2.1.14            
+    ##  [79] knitr_1.16              bit64_0.9-7            
+    ##  [81] robustbase_0.92-7       dendextend_1.5.2       
+    ##  [83] nlme_3.1-131            whisker_0.3-2          
+    ##  [85] mime_0.5                slam_0.1-40            
+    ##  [87] leaps_3.0               compiler_3.4.0         
+    ##  [89] png_0.1-7               affyio_1.46.0          
+    ##  [91] pcaPP_1.9-72            stringi_1.1.5          
+    ##  [93] lattice_0.20-35         trimcluster_0.1-2      
+    ##  [95] Matrix_1.2-10           GlobalOptions_0.0.12   
+    ##  [97] data.table_1.10.4       cowplot_0.7.0          
+    ##  [99] bitops_1.0-6            httpuv_1.3.3           
+    ## [101] R6_2.2.1                latticeExtra_0.6-28    
+    ## [103] affy_1.54.0             gridExtra_2.2.1        
+    ## [105] codetools_0.2-15        MASS_7.3-47            
+    ## [107] gtools_3.5.0            assertthat_0.2.0       
+    ## [109] rprojroot_1.2           rjson_0.2.15           
+    ## [111] withr_1.0.2             GenomeInfoDbData_0.99.0
+    ## [113] diptest_0.75-7          hms_0.3                
+    ## [115] rpart_4.1-11            class_7.3-14           
+    ## [117] ggpubr_0.1.4            scatterplot3d_0.3-40   
+    ## [119] shiny_1.0.3             WGCNA_1.60             
+    ## [121] base64enc_0.1-3         FactoMineR_1.36
 
 References
 ==========
@@ -551,3 +654,13 @@ References
 [5] Armitage, E. G., Godzien, J., Alonso-Herranz, V., L pez-Gonz lvez, N., & Barbas, C. (2015). Missing value imputation strategies for metabolomics data. Electrophoresis, 36(24), 3050–3060. <http://doi.org/10.1002/elps.201500352>
 
 [6] Ignatiadis, N., Klaus, B., Zaugg, J. B., & Huber, W. (2016). Data-driven hypothesis weighting increases detection power in genome-scale multiple testing. Nature Methods, 13(7), 577–580. <http://doi.org/10.1038/nmeth.3885>
+
+[7] Langfelder, P., & Horvath, S. (2008). WGCNA: an R package for weighted correlation network analysis. BMC Bioinformatics, 9, 559–559. <http://doi.org/10.1186/1471-2105-9-559>
+
+[8] Zheng, C.-H., Yuan, L., Sha, W., & Sun, Z.-L. (2014). Gene differential coexpression analysis based on biweight correlation and maximum clique. BMC Bioinformatics, 15 Suppl 15(Suppl 15), S3. <http://doi.org/10.1186/1471-2105-15-S15-S3>
+
+[9] Horvarth Paper.
+
+[10] Horvarth Paper.
+
+[11] Ignatiadis, N., Klaus, B., Zaugg, J. B., & Huber, W. (2016). Data-driven hypothesis weighting increases detection power in genome-scale multiple testing. Nature Methods, 13(7), 577–580. <http://doi.org/10.1038/nmeth.3885>

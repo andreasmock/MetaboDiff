@@ -19,7 +19,20 @@ Comparative non-targeted metabolomics comes of age through an increasing number 
 
 # Installation
 
-The `MetaboDiff` R package can be installed via Github. Please note that `MetaboDiff` requires an R version >= 3.4.
+The `MetaboDiff` R package can be installed via Github. Please note that `MetaboDiff` requires an R version >= 3.4. 
+
+## Install dependencies
+
+Please note that CRAN occasionally fails to compile the `WGCNA` package for Mac OS X. Hence, we recommend to install the package before installing `MetaboDiff`:
+
+```{r, eval=FALSE}
+install.packages("WGCNA")
+```
+
+If asked, install the package from source. Please refer to the [developer page](https://labs.genetics.ucla.edu/horvath/CoexpressionNetwork/Rpackages/WGCNA/)  
+if you encounter problems installing the `WGCNA` package.
+
+## Install MetaboDiff
 
 ```{r, eval=FALSE}
 library("devtools")
