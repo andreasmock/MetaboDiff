@@ -1,47 +1,63 @@
 ---
-title: 'MetaboDiff tutorial'
-author: | 
-  | Andreas Mock
-  | Experimental Neurosurgery, Heidelberg University Hospital,
-  | Division of Applied Bioinformatics, German Cancer Research Center (DFKZ) Heidelberg &
-  | Department of Medical Oncology, National Center for Tumor Diseases (NCT) Heidelberg
-date: '`r Sys.Date()`'
-output:
-  github_document:
-    toc: true
+title: "MetaboDiff tutorial"
+author:
+- name: Andreas Mock
+  affiliation: University Hospital, German Cancer Research Center (DKFZ) and National Center for Tumor Diseases (NCT), Heidelberg
+  email: mock.science@gmail.com
+package: MetaboDiff
+output: 
+  BiocStyle::html_document2:
     toc_depth: 2
-fig_caption: yes
+    toc_float: true
+abstract: |
+  Comparative non-targeted metabolomics comes of age through an increasing number of commercial vendors offering reproducible high-quality metabolomic data for translational researchers outside the mass spectrometry field. The MetaboDiff packages aims to provide a low-level entry to differential metabolomic analysis by starting off with the table of relative metabolite quantifications provided by commercial vendors or core facilities. 
+vignette: |
+  %\VignetteIndexEntry{MetaboDiff}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}  
 ---
 
-# Introduction
+```{r, include=FALSE, eval=FALSE}
+op <- options(gvis.plot.tag='chart')
+```
 
-Comparative non-targeted metabolomics comes of age through an increasing number of commercial vendors offering reproducible high-quality metabolomic data for translational researchers outside the mass spectrometry field. This R packages aims to provide a low-level entry to differential metabolomic analysis by starting off with the table of relative metabolite quantifications provided by commercial vendors or core facilities. 
+# Getting started
 
-# Installation
+The `r Githubpkg("andreasmock/MetaboDiff")` R package can be installed via Github and requires R version >= 3.4. 
 
-The `MetaboDiff` R package can be installed via Github. Please note that `MetaboDiff` requires an R version >= 3.4. 
+## Installing dependencies
 
-## Install dependencies
+CRAN occasionally fails to compile the `WGCNA` package for Mac OS X. Hence, we recommend to install the package before installing `MetaboDiff`:
 
-Please note that CRAN occasionally fails to compile the `WGCNA` package for Mac OS X. Hence, we recommend to install the package before installing `MetaboDiff`:
-
-```{r, eval=FALSE}
+```{r dependencies, eval=FALSE}
 install.packages("WGCNA")
 ```
 
-If asked, install the package from source. Please refer to the [developer page](https://labs.genetics.ucla.edu/horvath/CoexpressionNetwork/Rpackages/WGCNA/)  
-if you encounter problems installing the `WGCNA` package.
+If asked, install the package from source. 
 
-## Install MetaboDiff
+Alternatively you might need to download the package from the [developer](https://labs.genetics.ucla.edu/horvath/CoexpressionNetwork/Rpackages/WGCNA/)  
+and install the package locally:
 
-```{r, eval=FALSE}
+```{r local download, eval=FALSE}
+install.packages(path_to_file, repos = NULL, type="source")
+```
+
+If you encounter problems installing `WGCNA`, please refer to the [developer page](https://labs.genetics.ucla.edu/horvath/CoexpressionNetwork/Rpackages/WGCNA/). 
+
+Please note that `MetaboDiff` can only be installed if `WGCNA` was successfully installed.
+
+## Installing MetaboDiff
+
+`MetaboDiff` can be installed via Github
+
+```{r installation, eval=FALSE}
 library("devtools")
 install_github("andreasmock/MetaboDiff")
 ```
 
 and once installed loaded by
 
-```{r, message=FALSE}
+```{r loading, message=FALSE}
 library("MetaboDiff")
 ```
 
@@ -51,54 +67,60 @@ library("MetaboDiff")
 
 ### Example data
 
-The example data is derived from a study by Priolo and colleagues in which they used the service of Metabolon&reg; to compare the tissue metabolome of 40 prostate cancers with 16 normal prostate specimens [^1]. 
-The table summarizing the relative metabolic measurements can be loaded from the journal homepage as follows:
+The example data is derived from a study by Priolo and colleagues in which they used the service of Metabolon&reg; to compare the tissue metabolome of 40 prostate cancers with 16 normal prostate specimens[^1].
 
-```{r, eval=TRUE, message=FALSE}
-data = as.matrix(gdata::read.xls("http://cancerres.aacrjournals.org/highwire/filestream/290852/field_highwire_adjunct_files/4/131853_1_supp_2658512_nbpsn6.xlsx",
-                          sheet=5,
-                          na.strings = ""))
+```{r example_data, eval=TRUE, message=FALSE}
+# load example data
+data = as.matrix(read.csv(system.file("extdata", 
+                                      "Priolo_data.csv", 
+                                      package = "MetaboDiff")))
 ```
 
 ### Input files
 
-The metabolomic data within `MetaboDiff` is stored as a `MultiAssayExperiment`class [^2]. This framework enables the coordinated representation of multiple experiments on partially overlapping samples with associated metadata and integrated subsetting across experiments. In the context of metabolomic data analysis, multiple assays are needed to store raw data and imputed data which usually contain different number of metabolites due to missing values (see section on data imputation for more details). 
+The metabolomic data within `MetaboDiff` is stored as a `MultiAssayExperiment` class[^2]. This framework enables the coordinated representation of multiple experiments on partially overlapping samples with associated metadata and integrated subsetting across experiments. In the context of metabolomic data analysis, multiple assays are needed to store raw data and imputed data which usually contain different number of metabolites due to missing values (see section on data imputation for more details). 
 
 The core components of the `MultiAssayExperiment` class are:
 
 * `ExperimentList` - a slot of class ExperimentList containing data for each experimental assay. Within the ExperimentList slot, the metabolomic data are stored as  
 SummarizedExperiment objects consisting of:
     + `assay` - a matrix containing the relative metabolic measurements. 
-    + `rowData` - a dataframe containing the metabolite annotation..
-* `colData` - a slot of class data frame describing the sample metadata available across all experiments
-* `sampleMap` - a slot of class data frame relating clinical data to experimental assay
-* `metadata` - a slot of class list. Within MetaboDiff, this slot contains a list of dataframes summarizing the results from the hypothesis testing.
+    + `rowData` - a dataframe containing the metabolite annotation.
+* `colData` - a slot of class dataframe describing the sample metadata available across all experiments.
+* `sampleMap` - a slot of class dataframe relating clinical data to experimental assay.
+* `metadata` - a slot of class list. Within MetaboDiff, this slot contains a list of dataframes summarizing the results from the comparative data analysis.
 
 #### Creation of assay object containing metabolomic data
 
-```{r}
-assay = apply(data[3:nrow(data),8:ncol(data)],2,as.numeric)
+```{r assay_object}
+assay = apply(data[4:nrow(data),8:ncol(data)],2,as.numeric)
 colnames(assay) = paste0(rep("sample",ncol(assay)),1:ncol(assay))
 rownames(assay) = paste0(rep("met",nrow(assay)),1:nrow(assay))
-assay[1:4,1:5]
+```
+
+```{r assay_object_2}
+knitr::kable(assay[1:4,1:5])
 ```
 
 #### Creation of colData object containing sample metadata
 
-```{r}
-colData = data.frame(id = colnames(t(data[1,8:ncol(data)])),
+```{r colData}
+colData = data.frame(id = colnames(data[,8:ncol(data)]),
                      tumor_normal = as.vector(t(data[1,8:ncol(data)])),
                    row.names=paste0(rep("pat",ncol(assay)),1:ncol(assay)))
 ```
 
 To showcase the full functionality of `MetaboDiff`, we generate a second random group label "random_gender".
 
-```{r}
+```{r random_gender}
 #set seed for reproducibility 
 set.seed(1)
 
 colData$random_gender = sample(c("random_male","random_female"),size = nrow(colData),replace = TRUE)
-head(colData)
+```
+
+```{r random_gender2}
+knitr::kable(head(colData))
 ```
 
 
@@ -106,9 +128,9 @@ head(colData)
 
 For the rowData object we start off with the annotation already provided by the commercial vendor: 
 
-```{r}
-rowData = as.data.frame(data[3:nrow(data),1:7])
-colnames(rowData) = data[2,1:7]
+```{r rowData}
+rowData = as.data.frame(data[4:nrow(data),1:7])
+colnames(rowData) = data[3,1:7]
 colnames(rowData)[7] = "HMDB_ID"
 rownames(rowData) = paste0(rep("met",nrow(assay)),1:nrow(assay))
 colnames(rowData)
@@ -116,9 +138,9 @@ colnames(rowData)
 
 #### Annotation using Small Molecular Pathway Database (SMPDB)
 
-Alongside the metabolic measurements, Metabolon&reg; provides metabolite annotation including so called super-pathways and sub-pathways. However, theses annotations might very from vendor to vendor. Hence, the `MetaboDiff` package makes use of the Small Molecular Pathway Database (SMPDB) for metabolite annotation [^3]. `MetaboDiff` supports all common metabolic IDs as input for the annotation (HMDB, KEGG and ChEBI). In the example data, both the KEGG and the HMDB identifier are available. As the databases (HMDB, KEGG or ChEBI) cover unique annotations due to different standards in identifying and reporting metabolites [^4], the function `get_SMPDBanno` queries the database using all three ids (if available) and joins all available information. The current SMPDB build used within `MetaboDiff` is version 2.0 and will be updated as new versions are released. Please refer to the development branch of `MetaboDiff` to work with the latest SMPDB annotation.
+Alongside the metabolic measurements, Metabolon&reg; provides metabolite annotation including so called super-pathways and sub-pathways. However, theses annotations might very from vendor to vendor. Hence, the `MetaboDiff` package makes use of the Small Molecular Pathway Database (SMPDB) for metabolite annotation[^3]. `MetaboDiff` supports all common metabolic IDs as input for the annotation (HMDB, KEGG and ChEBI). In the example data, both the KEGG and the HMDB identifier are available. As the databases (HMDB, KEGG or ChEBI) cover unique annotations due to different standards in identifying and reporting metabolites[^4], the function `get_SMPDBanno` queries the database using all three ids (if available) and joins all available information. The current SMPDB build used within `MetaboDiff` is version 2.0 and will be updated as new versions are released. Please refer to the development branch of `MetaboDiff` to work with the latest SMPDB annotation.
 
-```{r}
+```{r SMPDBanno}
 rowData = get_SMPDBanno(rowData,
                         column_kegg_id=6,
                         column_hmdb_id=7,
@@ -127,7 +149,7 @@ rowData = get_SMPDBanno(rowData,
 
 ### Creation of SummarizedExperiment object and ExperimentList
 
-```{r}
+```{r se}
 se = SummarizedExperiment(assays=assay,
                            rowData=rowData)
 experiment_list = list(raw=se)
@@ -136,7 +158,7 @@ experiment_list
 
 ### Creation of sampleMap 
 
-```{r}
+```{r sampleMap}
 sampleMap = data.frame(primary=rownames(colData),
                  colname=colnames(se))
 sampleMap_list = listToMap(list(raw=sampleMap))
@@ -144,7 +166,7 @@ sampleMap_list = listToMap(list(raw=sampleMap))
 
 ### Construction of MultiAssayExperiment
 
-```{r, message=FALSE, warning=FALSE}
+```{r mae, message=FALSE, warning=FALSE}
 met = MultiAssayExperiment(experiments = experiment_list,
                            colData = colData,
                            sampleMap = sampleMap_list)
@@ -157,17 +179,17 @@ In contrast to other high-throughput technologies, missing values are common in 
 
 The function `na_heatmap` visualizes the missing metabolite measurements across the samples. The name of the column in colData for grouping and the label colors for the two groups need to be specified.
 
-```{r}
+```{r heat, fig.cap="Missing metabolic measurements across the example data set. Missing measurements are visualized by a binary heatmap and barplots summarizing the fraction of missing measurement per metabolite and sample, respectively. In addition the group label of interest (tumor (T) vs. normal (N)) is visualized. Metabolite measurements are only imputed if less than 40 percent are missing."}
 na_heatmap(met,
            group_factor="tumor_normal",
            label_colors=c("darkseagreen","dodgerblue"))
 ```
 
-The example data supports the need for data imputation. It could be shown that k-nearest neighbor imputation minimizes the effects on the normality and variance of the data as long as the number of missing data does not exceed 40% [^5]. 
+The example data supports the need for data imputation (figure \@ref(fig:heat)). It could be shown that k-nearest neighbor imputation minimizes the effects on the normality and variance of the data as long as the number of missing data does not exceed 40%[^5]. 
 
 The function 'knn_impute' adds the slot "impute" to the MultiAssayExperiment object that contains the imputed relative metabolite measurements for all metabolites with raw measurements in more than 60% of cases. We recommend a cutoff of 40% (i.e. 0.4). However the cutoff might be changed according to the discretion of the user.
 
-```{r}
+```{r imputation}
 met = knn_impute(met,cutoff=0.4)
 met
 ```
@@ -180,7 +202,7 @@ Before we normalize the data, we want to exclude outliers in the study set. To t
 The sample annotation shows the number of missing metabolites per sample as the proxy of the impact of imputation on clustering. 
 To showcase outliers, the hierarchical clustering tree is cut in 2 clusters.
 
-```{r}
+```{r outlier, fig.cap="Hierarchical clustering of metabolite measurements. The tree is cut in 2 clusters. The user has the choice to exclude one cluster which he thinks might represent outliers. To determine the effect of imputation, a barplot displaying the fraction of missing metabolites is shown in the column annotation of the heatmap."}
 outlier_heatmap(met,
                 group_factor="tumor_normal",
                 label_colors=c("darkseagreen","dodgerblue"))
@@ -188,7 +210,7 @@ outlier_heatmap(met,
 
 The imputed data of the example study set displays a cluster of 5 samples (cluster 1) with an in average lower relative metabolite abundance. Due to the lack of batch information, this cannot be investigted further at this time. To demonstrate, how a cluster can be removed, we apply the function `remove_cluster` to remove cluster 1:
 
-```{r, message=FALSE}
+```{r remove_cluster, message=FALSE}
 met = remove_cluster(met,cluster=1)
 met
 ```
@@ -199,13 +221,13 @@ As displayed in the summary of the `met` object, the 5 samples of cluster 1 were
 
 Variance stabilizing normalization (vsn) is used ensure that the variance remains nearly constant over the measured spectrum (Huber et al., 2002).
 
-```{r}
+```{r norm, message=FALSE}
 met = normalize_met(met)
 ```
 
 ## Summary of processed object
 
-```{r}
+```{r summary}
 met
 ```
 
@@ -218,17 +240,20 @@ At this point the data processing is completed. The `MultiAssayExperiment` objec
 
 ## Quality control of normalization
 
-```{r,fig.width=10,fig.height=8, message=FALSE, warning=FALSE}
+```{r quality, message=FALSE, warning=FALSE, fig.cap="Quality control plot. Boxplot displaying the distribution of (A) raw, (B) imputed (C) normalized and (D) imputed and normalized metabolite measurements for all samples of the study set. Boxplot are colored according to the grouping of interest, i.e. tumor vs normal.", fig.width=10, fig.height=10}
 quality_plot(met,
              group_factor="tumor_normal",
              label_colors=c("darkseagreen","dodgerblue"))
 ```
 
+
 # Part II: Data analysis
+
+Part II of `MetaboDiff` contains a set of functions for comparative data analysis that are purpose-built for the preprocessed `MultiAssayExperiment` object. All statistics obtained in this part will be saved in the metadata slot of the object.
 
 ## Principal component analysis (PCA)
 
-```{r}
+```{r pca}
 metadata(met)$res_pca = FactoMineR::PCA(t(assays(met)[["norm_imputed"]]), 
               scale.unit = TRUE,
               graph=FALSE)
@@ -236,13 +261,14 @@ metadata(met)$res_pca = FactoMineR::PCA(t(assays(met)[["norm_imputed"]]),
 
 Visualize percentage of explained variances for the first ten principal components i.e. dimensions.
 
-```{r}
+```{r var, fig.cap="Variance explained by principal components. Barplot for principal components one to ten are displayed.", fig.small=TRUE}
 factoextra::fviz_screeplot(metadata(met)$res_pca , addlabels=TRUE)
 ```
 
-PCA plot.
+In the example data, principal component 1 explains 17.1% and principal component 2 9.4% of variance.
+The following function creates the PCA plot for the grouping of interest.
 
-```{r}
+```{r pcaplot, fig.cap="PCA plot. The samples are colored according to the grouping of interest.", fig.small=TRUE}
 factoextra::fviz_pca_ind(metadata(met)$res_pca,
              label="none",
              habillage=colData(met)[["tumor_normal"]],
@@ -252,18 +278,18 @@ factoextra::fviz_pca_ind(metadata(met)$res_pca,
 
 ## Hypothesis testing
 
-Differential analysis for individual metabolites is performed using Student's T-Test. Correction for multiple testing is performed by independent hypothesis weighting (IHW [^6]) with variance as a covariate. 
+Differential analysis for individual metabolites is performed using Student's T-Test. Correction for multiple testing is performed by independent hypothesis weighting (IHW[^6]) with variance as a covariate. 
 
-Hypothesis testing will be performed for the sample grouping "tumor_normal", as well for the randomly generated grouping "random_gender".
+Hypothesis testing will be performed for the sample grouping "tumor_normal", as well as for the randomly generated grouping "random_gender".
 
-```{r, message=FALSE}
+```{r diff_test, message=FALSE}
 met = diff_test(met,
                 group_factors = c("tumor_normal","random_gender"))
 ```
 
 The results of the hypothesis testing is saved in the `metadata` splot of the MultiAssayExperiment object. 
 
-```{r}
+```{r str_met}
 str(metadata(met), max.level=2)
 ```
 
@@ -271,7 +297,7 @@ The columns of the result data frame are the unadjusted p-value (pval), the adju
 
 The comparative analysis is visualized by means of a volcano plot.
 
-```{r}
+```{r volcano_plot1}
 volcano_plot(met, 
              group_factor="tumor_normal",
              label_colors=c("darkseagreen","dodgerblue"))
@@ -279,13 +305,13 @@ volcano_plot(met,
 
 As a sanity check, we also display the volcano plot for the random grouping "random_gender" for which we would not expect the same number of significant metabolites.
 
-```{r}
+```{r volcano_plot2}
 volcano_plot(met, 
              group_factor="random_gender",
              label_colors=c("brown","orange"))
 ```
 
-As expected, no metabolites was significant different between the randomly assigned grouping male vs. female after multiple testing with a cutoff of p_adjust < 0.05.
+As expected, no metabolite was significantly different between the randomly assigned grouping male vs. female after multiple testing with a cutoff of p_adjust < 0.05.
 
 ## Pathway analysis
 
@@ -293,55 +319,62 @@ In this part of the analysis, we will exploit the Small molecular Pathway Databa
 
 The annotations from the SMPDB has the prefix "SMPDB|". The remaining annotation was provided by the commercial vendor that generated the example data (i.e. Metabolon&reg;).
 
-```{r}
+```{r colnames}
 colnames(rowData(met[["norm_imputed"]]))
 ```
 
-```{r, fig.width=8, fig.height=9}
+### Variance boxplots
+
+For instance, this annotation can be used to explore the variance in pathways across the data set.
+
+```{r var_boxplot, fig.width=8, fig.height=9}
 variance_boxplot(met,
                  rowAnnotation = "SMPDB|Pathway.Name")
 ```
 
+`MetaboDiff` refrains from 'classical' pathway enrichment analyses, as they are limited by the need to define a priori metabolite sets for evaluation and ignore the topology of interactions. Hence, `MetaboDiff` offers the analysis of metabolic correlation networks.
 
 ## Metabolic correlation network analysis
 
-This section describes the generation and analysis of metabolic correlation networks. The workflow was adapted from the weighted gene co-expression analysis (WGCNA) proposed by Langfelder and Horvarth [^7].
+This section describes the generation and analysis of metabolic correlation networks. The workflow was adapted from the weighted gene co-expression analysis (WGCNA) proposed by Langfelder and Horvarth[^7].
 
 ### Construction dissiumilarity matrix
 
-The first step in constructing a metabolic correlation network is the creation of a dissimilarity matrix. Biweight midcorrelation was used as a similiarity measure as it is more robust to outliers than the absolute correlation coefficient [^8]. This choice is important, as we do not expect metabolites to be correlated in all patients. 
+The first step in constructing a metabolic correlation network is the creation of a dissimilarity matrix. Biweight midcorrelation was used as a similiarity measure as it is more robust to outliers than the absolute correlation coefficient[^8]. This choice is important, as we do not expect metabolites to be correlated in all patients. 
 
 The core concept of the so called "weighted" correlation analysis by Langfelder and Horvarth is that instead of defining a "hard" threshold (e.g. an absolute correlation coefficient > 0.8) to decide whether a node as connected to another, the adjacency `a` is defined by raising the similarity `s` to a power `beta` ('soft' threshold):
 
-$$a_{ij} = s_{ij}^\beta$$
+\begin{equation}
+a_{ij} = s_{ij}^\beta
+\end{equation}
+
 Lastly, the dissimilarity measure is defined by
 
-$$w_{ij} = 1 - a_{ij}$$
+\begin{equation}
+w_{ij} = 1 - a_{ij}    
+\end{equation}
 
 For detailed rational of this approach, please see Zhang and Horvath[^9]. For metabolic networks, we identified that a beta value of 3 was the lowest power for which the scale-free topology of the topology was met.
 
 The function `diss_matrix` creates the dissimilarity measure for the `met` objects and saves it in the metadata slot
 
-```{r}
+```{r diss_matrix}
 met = diss_matrix(met)
 str(metadata(met), max.level=2)
 ```
 
 ### Identification of metabolic correlation modules
 
-To identify metabolic correlation modules, metabolites are next clustered based on the dissimilarity measure, where branches of the dendrogram correspond to modules.  Ultimately, modules are detected by applying a branch cutting method. We employed the dynamic branch cut method developed by Langfelder and colleagues [^9], as constant height cutoffs exhibit suboptimal performance on complicated dendrograms. 
+To identify metabolic correlation modules, metabolites are next clustered based on the dissimilarity measure, where branches of the dendrogram correspond to modules.  Ultimately, modules are detected by applying a branch cutting method. We employed the dynamic branch cut method developed by Langfelder and colleagues[^10], as constant height cutoffs exhibit suboptimal performance on complicated dendrograms. 
 
-
- 
-```{r}
+```{r identify_modules}
 met = identify_modules(met, 
                        min_module_size=5)
 ```
 
-```{r}
-#plot the dendrogram and corresponding colour bars underneath
+```{r WGCNA_plot}
 WGCNA::plotDendroAndColors(metadata(met)$tree, 
-                    metadata(met)$module_colors, 
+                    metadata(met)$module_color_vector, 
                     'Module colors', 
                     dendroLabels = FALSE, 
                     hang = 0.03,
@@ -349,9 +382,9 @@ WGCNA::plotDendroAndColors(metadata(met)$tree,
                     guideHang = 0.05, main='')
 ```
 
-The relation between the identified co-expression modules can be visualized by a dendrogram of their *eigengenes*. The module *eigengene* is defined as the first principal component of its expression matrix. It could be shown that the module= *eigengene* is highly correlated with the gene that has the highest intramodular connectivity[^6].
+The relation between the identified co-expression modules can be visualized by a dendrogram of their *eigengenes*. The module *eigengene* is defined as the first principal component of its expression matrix. It could be shown that the module= *eigengene* is highly correlated with the gene that has the highest intramodular connectivity[^11].
 
-```{r}
+```{r eigengenes}
 par(mar=c(2,2,2,2))
 ape::plot.phylo(ape::as.phylo(metadata(met)$METree),
            type = 'fan',
@@ -360,19 +393,87 @@ ape::plot.phylo(ape::as.phylo(metadata(met)$METree),
 ape::tiplabels(frame = 'circle',
           col='black', 
           text=rep('',length(unique(metadata(met)$modules))), 
-          bg = levels(as.factor(metadata(met)$module_colors)))
+          bg = WGCNA::labels2colors(0:21))
+```
+
+```{r eigengenes2}
+par(mar=c(2,2,2,2))
+ape::plot.phylo(ape::as.phylo(metadata(met)$METree),
+           type = 'fan',
+           show.tip.label = TRUE, 
+           main='')
+```
+
+```{r modules}
+# number of metabolites per module
+table(metadata(met)$modules)
+```
+
+### Name metabolic correlation modules
+
+```{r naming}
+#the names are saved in this slot
+met = name_modules(met,
+                   pathway_annotation = "SUB_PATHWAY")
+
+# plot phylogram with names
+ape::plot.phylo(ape::as.phylo(metadata(met)$METree))
+```
+
+### Relation of metabolic correlation modules to sample traits 
+
+An advantage of co-expression network analysis is the possibility to integrate external information. 
+At the lowest hierarchical level, *gene significance* (GS) measures can be defined as the statistical significance (i.e. p-value, $p_i$) between the $i$-th node profile (gene) $x_i$ and the sample trait $T$
+
+\begin{equation}
+GS_i = -log~p_i
+\end{equation}
+
+*Module significance* in turn can be determined as the average absolute gene significance measure. This conceptual framework can be adapted to any research question.
+
+```{r calculate_MS}
+met = calculate_MS(met,
+                   group_factors = c("tumor_normal","random_gender"))
+str(metadata(met), max.level=1)
+```
+
+Plot of module significance 
+
+```{r MS_plot}
+MS_plot(met,
+        group_factor="tumor_normal")
+```
+
+```{r MS_plot2}
+MS_plot(met,
+        group_factor="random_gender")
 ```
 
 
+### Explore module of interest
+
+To explore the role of metabolites within a correlation module,  Langfelder and Horvath suggest a 'fuzzy' measure of *module membership* defined as
+
+\begin{equation}
+K^q = |cor(x_i,E^q)|
+\end{equation}
+
+where $x_i$ is the profile of gene $i$ and $E^q$ is the eigengene of module $q$. Based on this definition, $K$ describes how closely related metabolite $i$ is to module $q$. A meaningful visualization is consequently plotting the module membership over the p-value of the respective GS measure. As a third dimension, the dot-size is weighted according to the effect size, i.e. fold-change between the grouping of interest. 
 
 
-# Session information
+```{r MOI_plot, results="asis", eval=FALSE}
+MOI_plot(met,
+         group_factor="tumor_normal",
+         MOI=2)
+```
+
+
+# Session information {.unnumbered}
 
 ```{r}
 sessionInfo()
 ```
 
-# References
 [^1]: Priolo, C., Pyne, S., Rose, J., Regan, E. R., Zadra, G., Photopoulos, C., et al. (2014). AKT1 and MYC Induce Distinctive Metabolic Fingerprints in Human Prostate Cancer. Cancer Research, 74(24), 7198–7204. http://doi.org/10.1158/0008-5472.CAN-14-1490
 
 [^2]: Sig M (2017). MultiAssayExperiment: Software for the integration of multi-omics experiments in Bioconductor. R package version 1.2.1
@@ -389,4 +490,8 @@ sessionInfo()
 
 [^8]: Zheng, C.-H., Yuan, L., Sha, W., & Sun, Z.-L. (2014). Gene differential coexpression analysis based on biweight correlation and maximum clique. BMC Bioinformatics, 15 Suppl 15(Suppl 15), S3. http://doi.org/10.1186/1471-2105-15-S15-S3
 
-[^9]: Horvarth Paper.
+[^9]: Zhang, B., & Horvath, S. (2005). A general framework for weighted gene co-expression network analysis. Statistical Applications in Genetics and Molecular Biology, 4(1), Article17. http://doi.org/10.2202/1544-6115.1128
+
+[^10]: Langfelder, P., Zhang, B., & Horvath, S. (2008). Defining clusters from a hierarchical cluster tree: the Dynamic Tree Cut package for R. Bioinformatics, 24(5), 719–720. http://doi.org/10.1093/bioinformatics/btm563.
+
+[^11]: Horvath, S., & Dong, J. (2008). Geometric Interpretation of Gene Coexpression Network Analysis. PLoS Computational Biology (PLOSCB) 4(8), 4(8), e1000117–e1000117. http://doi.org/10.1371/journal.pcbi.1000117
