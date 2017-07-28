@@ -440,8 +440,10 @@ str(metadata(met), max.level=1)
 Plot of module significance 
 
 ```{r MS_plot}
+png("plots/MS_plot.png", width=10, height=5, res=300, units = "in")
 MS_plot(met,
         group_factor="tumor_normal")
+dev.off()
 ```
 
 ```{r MS_plot2}
