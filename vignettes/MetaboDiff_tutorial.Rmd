@@ -18,33 +18,29 @@ vignette: |
 ---
 
 ```{r, include=FALSE, eval=FALSE}
-op <- options(gvis.plot.tag='chart')
+options(gvis.plot.tag='chart')
 ```
 
 # Getting started
 
-The `r Githubpkg("andreasmock/MetaboDiff")` R package can be installed via Github and requires R version >= 3.4. 
+The `MetaboDiff` R package can be installed via Github and requires R version >= 3.4. 
 
 ## Installing dependencies
 
-CRAN occasionally fails to compile the `WGCNA` package for Mac OS X. Hence, we recommend to install the package before installing `MetaboDiff`:
+CRAN occasionally fails to compile the `WGCNA` package for Mac OS X. Hence, it is recommended to install the package before installing `MetaboDiff`:
 
 ```{r dependencies, eval=FALSE}
 install.packages("WGCNA")
 ```
 
-If asked, install the package from source. 
-
-Alternatively you might need to download the package from the [developer](https://labs.genetics.ucla.edu/horvath/CoexpressionNetwork/Rpackages/WGCNA/)  
+If asked, install the package from source. Alternatively you might need to download the package from the [developer](https://labs.genetics.ucla.edu/horvath/CoexpressionNetwork/Rpackages/WGCNA/)  
 and install the package locally:
 
 ```{r local download, eval=FALSE}
 install.packages(path_to_file, repos = NULL, type="source")
 ```
 
-If you encounter problems installing `WGCNA`, please refer to the [developer page](https://labs.genetics.ucla.edu/horvath/CoexpressionNetwork/Rpackages/WGCNA/). 
-
-Please note that `MetaboDiff` can only be installed if `WGCNA` was successfully installed.
+If you encounter problems installing `WGCNA`, please refer to the [developer page](https://labs.genetics.ucla.edu/horvath/CoexpressionNetwork/Rpackages/WGCNA/). Please note that `MetaboDiff` can only be installed if `WGCNA` was successfully installed.
 
 ## Installing MetaboDiff
 
@@ -110,7 +106,7 @@ colData = data.frame(id = colnames(data[,8:ncol(data)]),
                    row.names=paste0(rep("pat",ncol(assay)),1:ncol(assay)))
 ```
 
-To showcase the full functionality of `MetaboDiff`, we generate a second random group label "random_gender".
+To showcase the full functionality of `MetaboDiff`, a second random group label "random_gender" is generated.
 
 ```{r random_gender}
 #set seed for reproducibility 
@@ -126,7 +122,7 @@ knitr::kable(head(colData))
 
 #### Creation of rowData object containing metabolite annotations and ids 
 
-For the rowData object we start off with the annotation already provided by the commercial vendor: 
+The example data set comprises metabolite annotation provided by the commercial vendor: 
 
 ```{r rowData}
 rowData = as.data.frame(data[4:nrow(data),1:7])
@@ -147,7 +143,7 @@ rowData = get_SMPDBanno(rowData,
                         column_chebi_id=NA)
 ```
 
-### Creation of SummarizedExperiment object and ExperimentList
+### Creation of SummarizedExperiment and ExperimentList object
 
 ```{r se}
 se = SummarizedExperiment(assays=assay,
@@ -156,7 +152,7 @@ experiment_list = list(raw=se)
 experiment_list
 ```
 
-### Creation of sampleMap 
+### Creation of sampleMap object
 
 ```{r sampleMap}
 sampleMap = data.frame(primary=rownames(colData),
@@ -164,7 +160,7 @@ sampleMap = data.frame(primary=rownames(colData),
 sampleMap_list = listToMap(list(raw=sampleMap))
 ```
 
-### Construction of MultiAssayExperiment
+### Construction of MultiAssayExperiment object
 
 ```{r mae, message=FALSE, warning=FALSE}
 met = MultiAssayExperiment(experiments = experiment_list,
@@ -187,20 +183,20 @@ na_heatmap(met,
 
 The example data supports the need for data imputation (figure \@ref(fig:heat)). It could be shown that k-nearest neighbor imputation minimizes the effects on the normality and variance of the data as long as the number of missing data does not exceed 40%[^5]. 
 
-The function 'knn_impute' adds the slot "impute" to the MultiAssayExperiment object that contains the imputed relative metabolite measurements for all metabolites with raw measurements in more than 60% of cases. We recommend a cutoff of 40% (i.e. 0.4). However the cutoff might be changed according to the discretion of the user.
+The function `knn_impute` adds the slot "impute" to the MultiAssayExperiment object that contains the imputed relative metabolite measurements for all metabolites with raw measurements in more than 60% of cases. We recommend a cutoff of 40% (i.e. 0.4). However the cutoff might be changed according to the discretion of the user.
 
 ```{r imputation}
 met = knn_impute(met,cutoff=0.4)
 met
 ```
 
-As apparent form the summary description of the object 'met' the imputed data matrix contains only 238 of the 307 original metabolites according the cutoff of 40% missing values.
+As apparent form the summary description of the object `met` the imputed data matrix contains only 238 of the 307 original metabolites according the cutoff of 40% missing values.
 
 ## Removal of outliers
 
-Before we normalize the data, we want to exclude outliers in the study set. To this end, we provide the function `outlier_heatmap`.
+Before we normalize the data, we want to exclude outliers in the study set. To this end, the function `outlier_heatmap` is provided.
 The sample annotation shows the number of missing metabolites per sample as the proxy of the impact of imputation on clustering. 
-To showcase outliers, the hierarchical clustering tree is cut in 2 clusters.
+To showcase outliers, the hierarchical clustering tree is cut in 2 clusters (figure \@ref(fig:outlier)).
 
 ```{r outlier, fig.cap="Hierarchical clustering of metabolite measurements. The tree is cut in 2 clusters. The user has the choice to exclude one cluster which he thinks might represent outliers. To determine the effect of imputation, a barplot displaying the fraction of missing metabolites is shown in the column annotation of the heatmap."}
 outlier_heatmap(met,
@@ -208,7 +204,7 @@ outlier_heatmap(met,
                 label_colors=c("darkseagreen","dodgerblue"))
 ```
 
-The imputed data of the example study set displays a cluster of 5 samples (cluster 1) with an in average lower relative metabolite abundance. Due to the lack of batch information, this cannot be investigted further at this time. To demonstrate, how a cluster can be removed, we apply the function `remove_cluster` to remove cluster 1:
+The imputed data of the example study set displays a cluster of 5 samples (cluster 1) with in average lower relative metabolite measurements. Due to the lack of batch information, this cannot be investigted further at this time. To demonstrate, how a cluster can be removed, we apply the function `remove_cluster` to remove cluster 1:
 
 ```{r remove_cluster, message=FALSE}
 met = remove_cluster(met,cluster=1)
@@ -219,7 +215,7 @@ As displayed in the summary of the `met` object, the 5 samples of cluster 1 were
 
 ## Normalization
 
-Variance stabilizing normalization (vsn) is used ensure that the variance remains nearly constant over the measured spectrum (Huber et al., 2002).
+Variance stabilizing normalization (vsn) is used ensure that the variance remains nearly constant over the measured spectrum[^6].
 
 ```{r norm, message=FALSE}
 met = normalize_met(met)
@@ -231,16 +227,16 @@ met = normalize_met(met)
 met
 ```
 
-At this point the data processing is completed. The `MultiAssayExperiment` object contains now 4 slots:
+At this point the data processing is completed with the `MultiAssayExperiment` object containing 4 slots:
 
 - raw - raw relative metabolic measurements as provided by company or core facility
 - imputed - imputed relative metabolic measurements (k-nearest neighbor imputation)
 - norm - normalized relative metabolic measurements (vsn)
-- norm_imputed - normalized imputed relative metabolic measurements (vsn)
+- norm_imputed - normalized and imputed relative metabolic measurements (vsn)
 
 ## Quality control of normalization
 
-```{r quality, message=FALSE, warning=FALSE, fig.cap="Quality control plot. Boxplot displaying the distribution of (A) raw, (B) imputed (C) normalized and (D) imputed and normalized metabolite measurements for all samples of the study set. Boxplot are colored according to the grouping of interest, i.e. tumor vs normal.", fig.width=10, fig.height=10}
+```{r quality, message=FALSE, warning=FALSE, fig.cap="Quality control plot. Boxplot displaying the distribution of (A) raw, (B) imputed (C) normalized and (D) imputed and normalized relative metabolite measurements for all samples of the study set. Boxplot are colored according to the grouping of interest, i.e. tumor vs normal.", fig.width=10, fig.height=8}
 quality_plot(met,
              group_factor="tumor_normal",
              label_colors=c("darkseagreen","dodgerblue"))
@@ -249,9 +245,11 @@ quality_plot(met,
 
 # Part II: Data analysis
 
-Part II of `MetaboDiff` contains a set of functions for comparative data analysis that are purpose-built for the preprocessed `MultiAssayExperiment` object. All statistics obtained in this part will be saved in the metadata slot of the object.
+Part II of `MetaboDiff` comprises a set of functions for comparative data analysis that are purpose-built for the preprocessed `MultiAssayExperiment` object. All statistics obtained in this part will be saved in the metadata slot of the object. 
 
 ## Principal component analysis (PCA)
+
+A principal component analysis is performed and saved in the metadata slot by
 
 ```{r pca}
 metadata(met)$res_pca = FactoMineR::PCA(t(assays(met)[["norm_imputed"]]), 
@@ -259,16 +257,16 @@ metadata(met)$res_pca = FactoMineR::PCA(t(assays(met)[["norm_imputed"]]),
               graph=FALSE)
 ```
 
-Visualize percentage of explained variances for the first ten principal components i.e. dimensions.
+Figure \@ref(fig:var) visualised the percentage of explained variances for the first ten principal components i.e. dimensions.
 
 ```{r var, fig.cap="Variance explained by principal components. Barplot for principal components one to ten are displayed.", fig.small=TRUE}
 factoextra::fviz_screeplot(metadata(met)$res_pca , addlabels=TRUE)
 ```
 
-In the example data, principal component 1 explains 17.1% and principal component 2 9.4% of variance.
-The following function creates the PCA plot for the grouping of interest.
+In the example data, principal component 1 explains 17.1% and principal component 2 9.4% of the variance.
+The following function creates the PCA plot for the grouping of interest (figure \@ref(fig:pcaplot)).
 
-```{r pcaplot, fig.cap="PCA plot. The samples are colored according to the grouping of interest.", fig.small=TRUE}
+```{r pcaplot, fig.cap="PCA plot. The samples are colored according to the grouping of interest."}
 factoextra::fviz_pca_ind(metadata(met)$res_pca,
              label="none",
              habillage=colData(met)[["tumor_normal"]],
@@ -278,7 +276,7 @@ factoextra::fviz_pca_ind(metadata(met)$res_pca,
 
 ## Hypothesis testing
 
-Differential analysis for individual metabolites is performed using Student's T-Test. Correction for multiple testing is performed by independent hypothesis weighting (IHW[^6]) with variance as a covariate. 
+Differential analysis for individual metabolites is performed using Student's T-Test. Correction for multiple testing is performed by independent hypothesis weighting (IHW[^7]) with variance as a covariate. 
 
 Hypothesis testing will be performed for the sample grouping "tumor_normal", as well as for the randomly generated grouping "random_gender".
 
@@ -287,17 +285,17 @@ met = diff_test(met,
                 group_factors = c("tumor_normal","random_gender"))
 ```
 
-The results of the hypothesis testing is saved in the `metadata` splot of the MultiAssayExperiment object. 
+The results of the hypothesis testing is saved in the metadata splot of the MultiAssayExperiment object. 
 
 ```{r str_met}
 str(metadata(met), max.level=2)
 ```
 
-The columns of the result data frame are the unadjusted p-value (pval), the adjusted p-value by independent hypothesis weighting (adj_pval), the  Fold-Change between groups (fold_change) and the variance (var).
+The columns of the result dataframe are the unadjusted p-value (pval), the adjusted p-value by independent hypothesis weighting (adj_pval), the Fold-Change between groups (fold_change) and the variance (var).
 
-The comparative analysis is visualized by means of a volcano plot.
+The comparative analysis is visualized by means of a volcano plot (figure \@ref(fig:volcano1)).
 
-```{r volcano_plot1}
+```{r volcano1, fig.cap="Volcano plot of comparison tumor vs normal. The dashed lines mark the significance thresholds adjusted p-value<0.05 and fold-change>1.5. Significant metabolites are colored."}
 volcano_plot(met, 
              group_factor="tumor_normal",
              label_colors=c("darkseagreen","dodgerblue"))
@@ -305,19 +303,19 @@ volcano_plot(met,
 
 As a sanity check, we also display the volcano plot for the random grouping "random_gender" for which we would not expect the same number of significant metabolites.
 
-```{r volcano_plot2}
+```{r volcano2, fig.cap="Volcano plot of random comparison. The dashed lines mark the significance thresholds adjusted p-value<0.05 and fold-change>1.5."}
 volcano_plot(met, 
              group_factor="random_gender",
              label_colors=c("brown","orange"))
 ```
 
-As expected, no metabolite was significantly different between the randomly assigned grouping male vs. female after multiple testing with a cutoff of p_adjust < 0.05.
+As expected, no metabolite was significantly different between the randomly assigned grouping male vs. female after multiple testing with a cutoff of p<0.05 (figure \@ref(fig:volcano2)).
 
 ## Pathway analysis
 
-In this part of the analysis, we will exploit the Small molecular Pathway Database (SMPDB) annotation to explore metabolic pathways and perform an enrichment analysis.
+In this part of the analysis, we will exploit the Small Molecular Pathway Database (SMPDB) annotation to explore metabolic pathways and perform an enrichment analysis.
 
-The annotations from the SMPDB has the prefix "SMPDB|". The remaining annotation was provided by the commercial vendor that generated the example data (i.e. Metabolon&reg;).
+The annotations from the SMPDB have the prefix "SMPDB|". The remaining annotation was provided by the commercial vendor that generated the example data (i.e. Metabolon&reg;).
 
 ```{r colnames}
 colnames(rowData(met[["norm_imputed"]]))
@@ -325,9 +323,9 @@ colnames(rowData(met[["norm_imputed"]]))
 
 ### Variance boxplots
 
-For instance, this annotation can be used to explore the variance in pathways across the data set.
+For instance, this annotation can be used to explore the variance in pathways across the data set (figure \@ref(fig:varbox)).
 
-```{r var_boxplot, fig.width=8, fig.height=9}
+```{r varbox, fig.width=8, fig.height=9, fig.cap="Pathway-wide distribution of normalized relative metabolite measurment. The pathway annotation from the Small Molecular Pathway Database (SMPDB) was used."}
 variance_boxplot(met,
                  rowAnnotation = "SMPDB|Pathway.Name")
 ```
@@ -336,13 +334,13 @@ variance_boxplot(met,
 
 ## Metabolic correlation network analysis
 
-This section describes the generation and analysis of metabolic correlation networks. The workflow was adapted from the weighted gene co-expression analysis (WGCNA) proposed by Langfelder and Horvarth[^7].
+This section describes the generation and analysis of metabolic correlation networks. The workflow was adapted from the weighted gene co-expression analysis (WGCNA) proposed by Langfelder and Horvarth[^8].
 
 ### Construction dissiumilarity matrix
 
-The first step in constructing a metabolic correlation network is the creation of a dissimilarity matrix. Biweight midcorrelation was used as a similiarity measure as it is more robust to outliers than the absolute correlation coefficient[^8]. This choice is important, as we do not expect metabolites to be correlated in all patients. 
+The first step in constructing a metabolic correlation network is the creation of a dissimilarity matrix. Biweight midcorrelation was used as a similiarity measure as it is more robust to outliers than the absolute correlation coefficient[^9]. This choice is important, as we do not expect metabolites to be correlated in all patients. 
 
-The core concept of the so called "weighted" correlation analysis by Langfelder and Horvarth is that instead of defining a "hard" threshold (e.g. an absolute correlation coefficient > 0.8) to decide whether a node as connected to another, the adjacency `a` is defined by raising the similarity `s` to a power `beta` ('soft' threshold):
+The core concept of the so called "weighted" correlation analysis by Langfelder and Horvarth is that instead of defining a "hard" threshold (e.g. an absolute correlation coefficient > 0.8) to decide whether a node as connected to another, the adjacency `a` is defined by raising the similarity `s` to a power `beta` ("soft" threshold):
 
 \begin{equation}
 a_{ij} = s_{ij}^\beta
@@ -354,25 +352,25 @@ Lastly, the dissimilarity measure is defined by
 w_{ij} = 1 - a_{ij}    
 \end{equation}
 
-For detailed rational of this approach, please see Zhang and Horvath[^9]. For metabolic networks, we identified that a beta value of 3 was the lowest power for which the scale-free topology of the topology was met.
+For detailed rational of this approach, please see Zhang and Horvath[^10]. For metabolic networks, we identified that a beta value of 3 was the lowest power for which the scale-free topology of the topology was met.
 
 The function `diss_matrix` creates the dissimilarity measure for the `met` objects and saves it in the metadata slot
 
 ```{r diss_matrix}
 met = diss_matrix(met)
-str(metadata(met), max.level=2)
+str(metadata(met), max.level=1)
 ```
 
 ### Identification of metabolic correlation modules
 
-To identify metabolic correlation modules, metabolites are next clustered based on the dissimilarity measure, where branches of the dendrogram correspond to modules.  Ultimately, modules are detected by applying a branch cutting method. We employed the dynamic branch cut method developed by Langfelder and colleagues[^10], as constant height cutoffs exhibit suboptimal performance on complicated dendrograms. 
+To identify metabolic correlation modules, metabolites are next clustered based on the dissimilarity measure, where branches of the dendrogram correspond to modules.  Ultimately, modules are detected by applying a branch cutting method with a minimal module size of 5 metabolites. We employed the dynamic branch cut method developed by Langfelder and colleagues[^11], as constant height cutoffs exhibit suboptimal performance on complicated dendrograms. Figure \@ref(fig:WGCNA) shows the hierarchical clustering and corresponding modules after branch cutting.
 
-```{r identify_modules}
+```{r identify}
 met = identify_modules(met, 
                        min_module_size=5)
 ```
 
-```{r WGCNA_plot}
+```{r WGCNA, fig.cap="Hierarchical clustering of metabolites. The different colors represent the modules identified by the dynamic branch cutting method."}
 WGCNA::plotDendroAndColors(metadata(met)$tree, 
                     metadata(met)$module_color_vector, 
                     'Module colors', 
@@ -382,9 +380,9 @@ WGCNA::plotDendroAndColors(metadata(met)$tree,
                     guideHang = 0.05, main='')
 ```
 
-The relation between the identified co-expression modules can be visualized by a dendrogram of their *eigengenes*. The module *eigengene* is defined as the first principal component of its expression matrix. It could be shown that the module= *eigengene* is highly correlated with the gene that has the highest intramodular connectivity[^11].
+The relation between the identified metabolic correlation modules can be visualized by a dendrogram of their *eigengenes* (figure \@ref(fig:eigengenes)). The module *eigengene* is defined as the first principal component of its expression matrix. It could be shown that the module= *eigengene* is highly correlated with the gene that has the highest intramodular connectivity[^12].
 
-```{r eigengenes}
+```{r eigengenes, fig.cap="Hierarchical of metabolic correlation modules as revealed by the clustering of module eigengenes. Each node represents a metabolic correlation module."}
 par(mar=c(2,2,2,2))
 ape::plot.phylo(ape::as.phylo(metadata(met)$METree),
            type = 'fan',
@@ -396,14 +394,6 @@ ape::tiplabels(frame = 'circle',
           bg = WGCNA::labels2colors(0:21))
 ```
 
-```{r eigengenes2}
-par(mar=c(2,2,2,2))
-ape::plot.phylo(ape::as.phylo(metadata(met)$METree),
-           type = 'fan',
-           show.tip.label = TRUE, 
-           main='')
-```
-
 ```{r modules}
 # number of metabolites per module
 table(metadata(met)$modules)
@@ -411,19 +401,21 @@ table(metadata(met)$modules)
 
 ### Name metabolic correlation modules
 
-```{r naming}
-#the names are saved in this slot
+To enable a better interpretation of metabolic correlation modules, modules are named according to the most abundant pathway annotation in a module (figure \@ref(fig:naming)).
+
+```{r naming, fig.cap="Hierarchy of metabolic correlation modules. Modules are named named according to the most abundant pathway annotation in a module. Module 0 comprises the two metabolites without a significant interaction."}
+# calculate module significance
 met = name_modules(met,
                    pathway_annotation = "SUB_PATHWAY")
 
 # plot phylogram with names
-ape::plot.phylo(ape::as.phylo(metadata(met)$METree))
+ape::plot.phylo(ape::as.phylo(metadata(met)$METree), cex=0.9)
 ```
 
 ### Relation of metabolic correlation modules to sample traits 
 
-An advantage of co-expression network analysis is the possibility to integrate external information. 
-At the lowest hierarchical level, *gene significance* (GS) measures can be defined as the statistical significance (i.e. p-value, $p_i$) between the $i$-th node profile (gene) $x_i$ and the sample trait $T$
+An advantage of correlation network analysis is the possibility to integrate external information. 
+At the lowest hierarchical level, *gene significance* (GS) measures can be defined as the statistical significance (i.e. p-value, $p_i$) between the $i$-th node profile (metabolite) $x_i$ and the sample trait $T$
 
 \begin{equation}
 GS_i = -log~p_i
@@ -437,20 +429,19 @@ met = calculate_MS(met,
 str(metadata(met), max.level=1)
 ```
 
-Plot of module significance 
+Figure \@ref(fig:MSplot) shows that metabolic correlation module 2 (Creatine metabolism / Glutathione metabolism) was significantly associated with the tumor vs. normal comparison in the example data.
 
-```{r MS_plot}
-png("plots/MS_plot.png", width=10, height=5, res=300, units = "in")
+```{r MSplot, fig.cap="Association of tumor vs normal trait with metabolic correlation modules. Module 2 (Creatine metabolism / Glutathione metabolism) showed a significant module significance."}
 MS_plot(met,
         group_factor="tumor_normal")
-dev.off()
 ```
 
-```{r MS_plot2}
+In line with the volcano plots, the random grouping did not result in a significant association (figure \@ref(fig:MSplot2))
+
+```{r MSplot2, fig.cap="Association of random trait with metabolic correlation modules. No significant module significance can be observed."}
 MS_plot(met,
         group_factor="random_gender")
 ```
-
 
 ### Explore module of interest
 
@@ -460,7 +451,7 @@ To explore the role of metabolites within a correlation module,  Langfelder and 
 K^q = |cor(x_i,E^q)|
 \end{equation}
 
-where $x_i$ is the profile of gene $i$ and $E^q$ is the eigengene of module $q$. Based on this definition, $K$ describes how closely related metabolite $i$ is to module $q$. A meaningful visualization is consequently plotting the module membership over the p-value of the respective GS measure. As a third dimension, the dot-size is weighted according to the effect size, i.e. fold-change between the grouping of interest. 
+where $x_i$ is the profile of gene $i$ and $E^q$ is the eigengene of module $q$. Based on this definition, $K$ describes how closely related metabolite $i$ is to module $q$. A meaningful visualization is consequently plotting the module membership over the p-value of the respective GS measure. As a third dimension, the dot-size is weighted according to the effect size, i.e. absolute fold-change between the grouping of interest. 
 
 
 ```{r MOI_plot, results="asis", eval=FALSE}
@@ -486,14 +477,16 @@ sessionInfo()
 
 [^5]: Armitage, E. G., Godzien, J., Alonso-Herranz, V., L pez-Gonz lvez, N., & Barbas, C. (2015). Missing value imputation strategies for metabolomics data. Electrophoresis, 36(24), 3050–3060. http://doi.org/10.1002/elps.201500352
 
-[^6]: Ignatiadis, N., Klaus, B., Zaugg, J. B., & Huber, W. (2016). Data-driven hypothesis weighting increases detection power in genome-scale multiple testing. Nature Methods, 13(7), 577–580. http://doi.org/10.1038/nmeth.3885
+[^6]: Huber, W., Heydebreck, von, A., Sültmann, H., Poustka, A., & Vingron, M. (2002). Variance stabilization applied to microarray data calibration and to the quantification of differential expression. Bioinformatics, 18 Suppl 1, S96–104.
 
-[^7]: Langfelder, P., & Horvath, S. (2008). WGCNA: an R package for weighted correlation network analysis. BMC Bioinformatics, 9, 559–559. http://doi.org/10.1186/1471-2105-9-559
+[^7]: Ignatiadis, N., Klaus, B., Zaugg, J. B., & Huber, W. (2016). Data-driven hypothesis weighting increases detection power in genome-scale multiple testing. Nature Methods, 13(7), 577–580. http://doi.org/10.1038/nmeth.3885
 
-[^8]: Zheng, C.-H., Yuan, L., Sha, W., & Sun, Z.-L. (2014). Gene differential coexpression analysis based on biweight correlation and maximum clique. BMC Bioinformatics, 15 Suppl 15(Suppl 15), S3. http://doi.org/10.1186/1471-2105-15-S15-S3
+[^8]: Langfelder, P., & Horvath, S. (2008). WGCNA: an R package for weighted correlation network analysis. BMC Bioinformatics, 9, 559–559. http://doi.org/10.1186/1471-2105-9-559
 
-[^9]: Zhang, B., & Horvath, S. (2005). A general framework for weighted gene co-expression network analysis. Statistical Applications in Genetics and Molecular Biology, 4(1), Article17. http://doi.org/10.2202/1544-6115.1128
+[^9]: Zheng, C.-H., Yuan, L., Sha, W., & Sun, Z.-L. (2014). Gene differential coexpression analysis based on biweight correlation and maximum clique. BMC Bioinformatics, 15 Suppl 15(Suppl 15), S3. http://doi.org/10.1186/1471-2105-15-S15-S3
 
-[^10]: Langfelder, P., Zhang, B., & Horvath, S. (2008). Defining clusters from a hierarchical cluster tree: the Dynamic Tree Cut package for R. Bioinformatics, 24(5), 719–720. http://doi.org/10.1093/bioinformatics/btm563.
+[^10]: Zhang, B., & Horvath, S. (2005). A general framework for weighted gene co-expression network analysis. Statistical Applications in Genetics and Molecular Biology, 4(1), Article17. http://doi.org/10.2202/1544-6115.1128
 
-[^11]: Horvath, S., & Dong, J. (2008). Geometric Interpretation of Gene Coexpression Network Analysis. PLoS Computational Biology (PLOSCB) 4(8), 4(8), e1000117–e1000117. http://doi.org/10.1371/journal.pcbi.1000117
+[^11]: Langfelder, P., Zhang, B., & Horvath, S. (2008). Defining clusters from a hierarchical cluster tree: the Dynamic Tree Cut package for R. Bioinformatics, 24(5), 719–720. http://doi.org/10.1093/bioinformatics/btm563.
+
+[^12]: Horvath, S., & Dong, J. (2008). Geometric Interpretation of Gene Coexpression Network Analysis. PLoS Computational Biology (PLOSCB) 4(8), 4(8), e1000117–e1000117. http://doi.org/10.1371/journal.pcbi.1000117

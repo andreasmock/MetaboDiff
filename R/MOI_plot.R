@@ -12,8 +12,8 @@ MOI_plot = function(met, group_factor, MOI){
     fc = metadata(met)[[paste0("ttest_",group_factor)]]$fold_change[metadata(met)$modules==MOI]
     df = data.frame(mets=mets,x=x,y=y,fc=fc)
     googleVis::gvisBubbleChart(df, idvar="mets",xvar="x",yvar="y", sizevar="fc",
-         options=list(width=1000,
-                      height=1000,
+         options=list(width=500,
+                      height=500,
                       vAxis="{title:'module membership'}",
                       hAxis="{title:'p-value (-log10)'}"
                       ))
