@@ -7,12 +7,12 @@
 diff_test(met, group_factors)
 }
 \arguments{
-\item{met}{MultiAssayExperiment object with slots "raw", "imputed", "norm" and "norm_imputed"}
+\item{met}{fully preprocessed MultiAssayExperiment object with slots "raw", "imputed", "norm" and "norm_imputed"}
 
-\item{group_factors}{vector of group factors}
+\item{group_factors}{character vector of group factors}
 }
 \value{
-MultiAssayExperiment object with additional metadata slot containing the results of the comparative analysis
+adds results from comparative analysis to metadata slot
 }
 \description{
 Perform comparative analysis using T-Test

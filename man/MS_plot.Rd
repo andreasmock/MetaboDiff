@@ -7,10 +7,12 @@
 MS_plot(met, group_factor)
 }
 \arguments{
-\item{met}{MultiAssayExperiment object with slots "raw", "imputed", "norm" and "norm_imputed" and metadata slot containing the results of the differential analysis}
+\item{met}{fully preprocessed MultiAssayExperiment object with slots "raw", "imputed", "norm" and "norm_imputed"}
+
+\item{group_factor}{name of column in colData for grouping}
 }
 \value{
-MultiAssayExperiment object with slots "raw", "imputed", "norm" and "norm_imputed" and metadata slot containing the results of the differential analysis and dissimilarity matrix
+Module significance plot
 }
 \description{
 Module significance plot

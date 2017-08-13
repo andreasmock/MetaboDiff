@@ -7,7 +7,7 @@
 name_modules(met, pathway_annotation)
 }
 \arguments{
-\item{met}{MultiAssayExperiment object with slots "raw", "imputed", "norm" and "norm_imputed" and metadata slot containing the results of the differential analysis}
+\item{met}{fully preprocessed MultiAssayExperiment object with slots "raw", "imputed", "norm" and "norm_imputed"}
 
 \item{pathway_annotation}{Pathway annotation from rowData}
 }

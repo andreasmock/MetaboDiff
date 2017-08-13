@@ -1,8 +1,8 @@
 #' Perform comparative analysis using T-Test
 #'
-#' @param met MultiAssayExperiment object with slots "raw", "imputed", "norm" and "norm_imputed"
-#' @param group_factors vector of group factors
-#' @return MultiAssayExperiment object with additional metadata slot containing the results of the comparative analysis
+#' @param met fully preprocessed MultiAssayExperiment object with slots "raw", "imputed", "norm" and "norm_imputed"
+#' @param group_factors character vector of group factors
+#' @return adds results from comparative analysis to metadata slot
 #' @examples
 #' diff_test(met_example, group_factors = c("tumor_normal","random_gender"))
 #' @export

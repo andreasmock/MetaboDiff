@@ -1,10 +1,10 @@
 Package: MetaboDiff
 Type: Package
-Title: What the Package Does (Title Case)
-Version: 0.1.0
+Title: An R package for differential metabolomic analysis
+Version: 0.2.0
 Author: Andreas Mock
-Maintainer: The package maintainer <yourself@somewhere.net>
-Description: Tool suite for the analysis of Metabolon data.
+Maintainer: <mock.science@gmail.com>
+Description: The MetaboDiff packages aims to provide a low-level entry to differential metabolomic analysis by starting off with the table of relative metabolite quantifications provided by commercial vendors or core facilities. 
 Depends:
     R (>= 3.4),
     SummarizedExperiment,
@@ -13,18 +13,17 @@ Depends:
     ggplot2
 Imports:
     impute,
-    googleVis,
     vsn,
     cowplot,
-    FactoMineR,
-    factoextra,
+    Rtsne,
     IHW,
     genefilter,
     WGCNA,
     ape,
     dynamicTreeCut,
     plyr,
-    phytools
+    phytools,
+    tsne
 VignetteBuilder: knitr
 Suggests: BiocStyle, knitr, rmarkdown
 License: MIT

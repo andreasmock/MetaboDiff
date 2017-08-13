@@ -7,14 +7,16 @@
 identify_modules(met, min_module_size)
 }
 \arguments{
-\item{met}{MultiAssayExperiment object with slots "raw", "imputed", "norm" and "norm_imputed" and metadata slot containing the results of the differential analysis}
+\item{met}{fully preprocessed MultiAssayExperiment object with slots "raw", "imputed", "norm" and "norm_imputed"}
+
+\item{min_module_size}{minimal modules size (default: 5 metabolites)}
 }
 \value{
-MultiAssayExperiment object with slots "raw", "imputed", "norm" and "norm_imputed" and metadata slot containing the results of the differential analysis and dissimilarity matrix
+adds objects for metabolic correlation modules to metadata slot
 }
 \description{
 Identification of metabolic correlation modules
 }
 \examples{
-identify_modules(met_example)
+identify_modules(met_example, min_module_size=5)
 }

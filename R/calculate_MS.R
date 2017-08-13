@@ -1,7 +1,8 @@
 #' Calculate module significance
 #'
-#' @param met MultiAssayExperiment object with slots "raw", "imputed", "norm" and "norm_imputed" and metadata slot containing the results of the differential analysis
-#' @return MultiAssayExperiment object with slots "raw", "imputed", "norm" and "norm_imputed" and metadata slot containing the results of the differential analysis and dissimilarity matrix
+#' @param met fully preprocessed MultiAssayExperiment object with slots "raw", "imputed", "norm" and "norm_imputed"
+#' @return adds module significance measures to metadata slot
+#' @param group_factor name of column in colData for grouping
 #' @examples
 #' calculare_MS(met_example, group_factors = c("tumor_normal","random_gender"))
 #' @export

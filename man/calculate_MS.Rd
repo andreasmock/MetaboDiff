@@ -7,10 +7,12 @@
 calculate_MS(met, group_factors)
 }
 \arguments{
-\item{met}{MultiAssayExperiment object with slots "raw", "imputed", "norm" and "norm_imputed" and metadata slot containing the results of the differential analysis}
+\item{met}{fully preprocessed MultiAssayExperiment object with slots "raw", "imputed", "norm" and "norm_imputed"}
+
+\item{group_factor}{name of column in colData for grouping}
 }
 \value{
-MultiAssayExperiment object with slots "raw", "imputed", "norm" and "norm_imputed" and metadata slot containing the results of the differential analysis and dissimilarity matrix
+adds module significance measures to metadata slot
 }
 \description{
 Calculate module significance

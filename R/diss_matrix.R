@@ -1,7 +1,7 @@
 #' Construct dissimilarity matrix for metabolic correlation network
 #'
-#' @param met MultiAssayExperiment object with slots "raw", "imputed", "norm" and "norm_imputed" and metadata slot containing the results of the differential analysis
-#' @return MultiAssayExperiment object with slots "raw", "imputed", "norm" and "norm_imputed" and metadata slot containing the results of the differential analysis and dissimilarity matrix
+#' @param met fully preprocessed MultiAssayExperiment object with slots "raw", "imputed", "norm" and "norm_imputed"
+#' @return adds dissimilarity matrix to metadata slot
 #' @examples
 #' diss_matrix(met_example)
 #' @export

@@ -1,9 +1,10 @@
 #' Identification of metabolic correlation modules
 #'
-#' @param met MultiAssayExperiment object with slots "raw", "imputed", "norm" and "norm_imputed" and metadata slot containing the results of the differential analysis
-#' @return MultiAssayExperiment object with slots "raw", "imputed", "norm" and "norm_imputed" and metadata slot containing the results of the differential analysis and dissimilarity matrix
+#' @param met fully preprocessed MultiAssayExperiment object with slots "raw", "imputed", "norm" and "norm_imputed"
+#' @param min_module_size minimal modules size (default: 5 metabolites)
+#' @return adds objects for metabolic correlation modules to metadata slot
 #' @examples
-#' identify_modules(met_example)
+#' identify_modules(met_example, min_module_size=5)
 #' @export
 identify_modules <- function(met, min_module_size) {
     w = metadata(met)$diss_matrix

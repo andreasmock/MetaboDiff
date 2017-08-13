@@ -7,10 +7,10 @@
 diss_matrix(met)
 }
 \arguments{
-\item{met}{MultiAssayExperiment object with slots "raw", "imputed", "norm" and "norm_imputed" and metadata slot containing the results of the differential analysis}
+\item{met}{fully preprocessed MultiAssayExperiment object with slots "raw", "imputed", "norm" and "norm_imputed"}
 }
 \value{
-MultiAssayExperiment object with slots "raw", "imputed", "norm" and "norm_imputed" and metadata slot containing the results of the differential analysis and dissimilarity matrix
+adds dissimilarity matrix to metadata slot
 }
 \description{
 Construct dissimilarity matrix for metabolic correlation network

@@ -1,6 +1,6 @@
 #' Name metabolic correlation modules
 #'
-#' @param met MultiAssayExperiment object with slots "raw", "imputed", "norm" and "norm_imputed" and metadata slot containing the results of the differential analysis
+#' @param met fully preprocessed MultiAssayExperiment object with slots "raw", "imputed", "norm" and "norm_imputed"
 #' @param pathway_annotation Pathway annotation from rowData
 #' @return names of metabolic correlation modules stored in metadata(met)$METree$labels
 #' @examples

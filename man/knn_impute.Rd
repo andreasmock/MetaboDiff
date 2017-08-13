@@ -7,7 +7,7 @@
 knn_impute(met, cutoff)
 }
 \arguments{
-\item{met}{MultiAssayExperiment object with slots "raw"}
+\item{met}{MultiAssayExperiment object with slot "raw"}
 
 \item{cutoff}{Cutoff at which fraction of missing values, a metabolite should be removed from the data. The recommended cutoff is 0.4, e.g. 40 percent.}
 }

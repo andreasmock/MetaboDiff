@@ -1,6 +1,6 @@
 #' Volcano plot of differential analysis
 #'
-#' @param met MultiAssayExperiment object with slots "raw", "imputed", "norm" and "norm_imputed" and metadata slot containing the results of the differential analysis
+#' @param met fully preprocessed MultiAssayExperiment object with slots "raw", "imputed", "norm" and "norm_imputed"
 #' @param group_factor name of column in colData for grouping
 #' @param label_colors vector of colors for levels of sample_label
 #' @return Volcano plot of differential analysis

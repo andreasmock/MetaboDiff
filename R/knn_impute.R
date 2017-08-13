@@ -1,6 +1,6 @@
 #' Impute metabolomic data by k-nearest neighbour imputation
 #'
-#' @param met MultiAssayExperiment object with slots "raw"
+#' @param met MultiAssayExperiment object with slot "raw"
 #' @param cutoff Cutoff at which fraction of missing values, a metabolite should be removed from the data. The recommended cutoff is 0.4, e.g. 40 percent.
 #' @return MultiAssayExperiment object with slots "raw" and "imputed"
 #' @examples
