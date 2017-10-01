@@ -8,16 +8,31 @@
 #' @export
 name_modules = function(met, pathway_annotation){
     modules = metadata(met)$modules
-    module_names = rep(NA,max(modules)+1)
-    res = rep(NA,max(modules)+1)
-    for(i in 1:length(module_names)){
-        ids = as.numeric(which(modules==(i-1)))
-        paths = table(rowData(met[["norm_imputed"]])[[pathway_annotation]][ids])
-        names = names(which(paths[paths>0]==max(paths[paths>0])))
-        if (length(names)>1){
-            module_names[i] = paste0(i-1, " | ", paste(names[1:2],collapse=" | "))
-        } else {
-            module_names[i] = paste0(i-1, " | ", names)
+    if (!0 %in% modules) {
+        module_names = rep(NA,max(modules))
+        res = rep(NA,max(modules))
+        for(i in 1:length(module_names)){
+            ids = as.numeric(which(modules==(i)))
+            paths = table(rowData(met[["norm_imputed"]])[[pathway_annotation]][ids])
+            names = names(which(paths[paths>0]==max(paths[paths>0])))
+            if (length(names)>1){
+                module_names[i] = paste0(i, " | ", paste(names[1:2],collapse=" | "))
+            } else {
+                module_names[i] = paste0(i, " | ", names)
+            }
+        }
+    } else {
+        module_names = rep(NA,max(modules)+1)
+        res = rep(NA,max(modules)+1)
+        for(i in 1:length(module_names)){
+            ids = as.numeric(which(modules==(i-1)))
+            paths = table(rowData(met[["norm_imputed"]])[[pathway_annotation]][ids])
+            names = names(which(paths[paths>0]==max(paths[paths>0])))
+            if (length(names)>1){
+                module_names[i] = paste0(i-1, " | ", paste(names[1:2],collapse=" | "))
+            } else {
+                module_names[i] = paste0(i-1, " | ", names)
+            }
         }
     }
     metadata(met)$METree$labels = module_names

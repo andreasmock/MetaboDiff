@@ -8,6 +8,7 @@
 normalize_met <- function(met) {
     raw_temp = met[["raw"]]
     imputed_temp = met[["imputed"]]
+    colnames(imputed_temp) = colnames(raw_temp)
     assay(raw_temp) = vsn::justvsn(assay(raw_temp))
     assay(imputed_temp) = vsn::justvsn(assay(imputed_temp))
 

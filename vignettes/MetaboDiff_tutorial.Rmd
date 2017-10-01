@@ -6,7 +6,7 @@ author:
   email: mock.science@gmail.com
 package: MetaboDiff
 output: 
-   BiocStyle::html_document2:
+    BiocStyle::html_document2:
     toc_depth: 2
     toc_float: true
 abstract: |
@@ -131,7 +131,7 @@ colnames(rowData)
 
 #### Annotation using Small Molecular Pathway Database 
 
-Alongside the metabolic measurements, Metabolon&reg; provides metabolite annotation including so called super-pathways and sub-pathways. However, these annotations might very from vendor to vendor. Hence, the `MetaboDiff` package makes use of the Small Molecular Pathway Database (SMPDB) for metabolite annotation[^3]. `MetaboDiff` supports all common metabolic ids as input for the annotation (HMDB, KEGG and ChEBI). In the example data, both the KEGG and the HMDB identifier are available. As the databases (HMDB, KEGG or ChEBI) cover unique annotations due to different standards in identifying and reporting metabolites[^4], the function `get_SMPDBanno` queries the database using all three ids (if available) and joins all available information. The current SMPDB build used within `MetaboDiff` is version 2.0 and will be updated as new versions are released. Please refer to the development branch of `MetaboDiff` to work with the latest SMPDB annotation.
+Alongside the metabolic measurements, Metabolon&reg; provides metabolite annotation including so called super-pathways and sub-pathways. However, these annotations might vary from vendor to vendor. Hence, the `MetaboDiff` package makes use of the Small Molecular Pathway Database (SMPDB) for metabolite annotation[^3]. `MetaboDiff` supports all common metabolic ids as input for the annotation (HMDB, KEGG and ChEBI). In the example data, both the KEGG and the HMDB identifier are available. As the databases (HMDB, KEGG or ChEBI) cover unique annotations due to different standards in identifying and reporting metabolites[^4], the function `get_SMPDBanno` queries the database using all three ids (if available) and joins all available information. The current SMPDB build used within `MetaboDiff` is version 2.0 and will be updated as new versions are released. Please refer to the development branch of `MetaboDiff` to work with the latest SMPDB annotation.
 
 ```{r SMPDBanno}
 rowData = get_SMPDBanno(rowData,
@@ -243,7 +243,7 @@ The quality control plots shows the distribution of raw and normalized metabolic
 
 # Part II: Data analysis
 
-Part II of `MetaboDiff` comprises a set of functions for comparative data analysis that are purpose-built for the preprocessed `MultiAssayExperiment` object. All statistics obtained in this part will be saved in the metadata slot of the object. Certain plotting functions will only be available once the correponding statistics has been run, e.g. you will only be able to plot the volcano plot after executing the function for differential analysis (`diff_test`). Please note that the data analysis has been developed for metabolomic data sets of more than 100 metabolites. Hence, some functionality might not be available with smaller data sets < 50 metabolites.
+Part II of `MetaboDiff` comprises a set of functions for comparative data analysis that are purpose-built for the preprocessed `MultiAssayExperiment` object. All statistics obtained in this part will be saved in the metadata slot of the object. Certain plotting functions will only be available once the corresponding statistics has been run, e.g. you will only be able to plot the volcano plot after executing the function for differential analysis (`diff_test`). Please note that the data analysis has been developed for metabolomic data sets of more than 100 metabolites. Hence, some functionality might not be available with smaller data sets < 50 metabolites.
 
 ## tSNE analysis
 
@@ -335,7 +335,7 @@ Lastly, the dissimilarity measure `w` is defined by
 w_{ij} = 1 - a_{ij}    
 \end{equation}
 
-For detailed rational of this approach, please see Zhang and Horvath[^10]. For metabolic networks, we identified that a beta value of 3 was the lowest power for which the scale-free topology of the topology was met.
+For detailed rationale of this approach, please see Zhang and Horvath[^10]. For metabolic networks, we identified that a beta value of 3 was the lowest power for which the scale-free topology of the topology was met.
 
 The function `diss_matrix` creates the dissimilarity measure for the `met` objects and saves it in the metadata slot
 
@@ -436,7 +436,7 @@ K^q = |cor(x_i,E^q)|
 
 where $x_i$ is the profile of gene $i$ and $E^q$ is the eigengene of module $q$. Based on this definition, $K$ describes how closely related metabolite $i$ is to module $q$. A meaningful visualization is consequently plotting the module membership over the p-value of the respective GS measure. As a third dimension, the dot-size is weighted according to the effect size, i.e. absolute fold-change between the grouping of interest. 
 
-```{r MOIplot, fig.cap="Exploration of module of interest. Module membership is plotted over the -log10 p-value. The dashed line marks the significance threshold of adjusted p-value<0.05."}
+```{r MOIplot, fig.cap="Exploration of module of interest. Module membership is plotted over the -log10 p-value. The dashed line marks the significance threshold of adjusted p-value<0.05.",fig.height=8, fig.width=8, fig.wide=TRUE}
 MOI_plot(met,
          group_factor="tumor_normal",
          MOI=2) + xlim(c(0,5)) 

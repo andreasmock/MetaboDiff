@@ -14,7 +14,7 @@ outlier_heatmap = function(met, group_factor, label_colors) {
     mat = log2(assays(met)[["imputed"]] / apply(assays(met)[["imputed"]],1,median))
     clusters = cutree(hclust(dist(t(mat))),k=2)
     col_list = list(grouping=label_colors,cluster=c("black","grey"))
-    names(col_list$grouping)=levels(sample_labels)
+    names(col_list$grouping)=levels(droplevels(sample_labels))
     names(col_list$cluster)=c(1,2)
     rowanno = columnAnnotation(df=data.frame(grouping=colData(met)[[group_factor]],cluster=as.vector(clusters)),
                                col=col_list,

@@ -11,17 +11,17 @@ na_heatmap = function(met, group_factor, label_colors) {
     met_na = is.na(assay(met))*1
     row_na = apply(met_na,1,sum)/ncol(met_na)
     col_na = apply(met_na,2,sum)/nrow(met_na)
-    sample_labels = as.factor(colData(met)[[group_factor]])
-        col_list = list(grouping=label_colors)
-        names(col_list$grouping)=levels(sample_labels)
-        colanno = columnAnnotation(df=data.frame(grouping=sample_labels),
-                                   col=col_list,
-                                   barplot=anno_barplot(col_na[order(col_na)],
-                                                        gp=gpar(fill="brown",
-                                                                col="brown"),
-                                                        axis=TRUE,
-                                                        border=FALSE),
-                                   annotation_height=c(1,3))
+    sample_labels = as.factor(colData(met)[[group_factor]])[order(col_na)]
+    col_list = list(grouping=label_colors)
+    names(col_list$grouping)=levels(droplevels(sample_labels))
+    colanno = columnAnnotation(df=data.frame(grouping=sample_labels),
+                               col=col_list,
+                               barplot=anno_barplot(col_na[order(col_na)],
+                                                    gp=gpar(fill="brown",
+                                                            col="brown"),
+                                                    axis=TRUE,
+                                                    border=FALSE),
+                               annotation_height=c(1,3))
     rowanno = rowAnnotation(barplot=row_anno_barplot(row_na[order(row_na)],
                                                      gp=gpar(fill="brown",
                                                              col="brown"),
