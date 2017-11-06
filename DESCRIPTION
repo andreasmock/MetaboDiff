@@ -1,7 +1,7 @@
 Package: MetaboDiff
 Type: Package
 Title: An R package for differential metabolomic analysis
-Version: 0.2.0
+Version: 0.9.0
 Author: Andreas Mock
 Maintainer: <mock.science@gmail.com>
 Description: The MetaboDiff packages aims to provide a low-level entry to differential metabolomic analysis by starting off with the table of relative metabolite quantifications provided by commercial vendors or core facilities. 
@@ -15,7 +15,6 @@ Imports:
     impute,
     vsn,
     cowplot,
-    Rtsne,
     IHW,
     genefilter,
     WGCNA,

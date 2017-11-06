@@ -2,7 +2,7 @@
 title: "MetaboDiff tutorial"
 author:
 - name: Andreas Mock
-  affiliation: University Hospital, German Cancer Research Center (DKFZ) and National Center for Tumor Diseases (NCT), Heidelberg
+  affiliation: University Hospital and National Center for Tumor Diseases (NCT), Heidelberg
   email: mock.science@gmail.com
 package: MetaboDiff
 output: 
