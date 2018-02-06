@@ -4,17 +4,23 @@
 \alias{get_SMPDBanno}
 \title{Annotation using Small Molecule Pathway Database (SMPDB)}
 \usage{
-get_SMPDBanno(rowData, column_kegg_id, column_hmdb_id, column_chebi_id)
+get_SMPDBanno(met, column_kegg_id, column_hmdb_id, column_chebi_id)
 }
 \arguments{
-\item{metabolite_ids}{vector of HMDB, KEGG or ChEBI identifiers.}
+\item{met}{MultiAssayExperiment object created with create_mae}
+
+\item{column_kegg_id}{Column number containing KEGG ids.}
+
+\item{column_chebi_id}{Column number containing ChEBI ids.}
+
+\item{column_hmbd_id}{Column number containing HMDB ids.}
 }
 \value{
-dataframe containing SMPDB annotation for metabolite identifiers.
+MultiAssayExperiment object with SMPDB annotation
 }
 \description{
 Annotation using Small Molecule Pathway Database (SMPDB)
 }
 \examples{
-get_SMPDBanno(as.data.frame(rowData(met_example[["raw"]]))[,1:7],column_kegg_id=6,column_hmdb_id=7,column_chebi_id=NA)
+get_SMPDBanno(met,column_kegg_id=6,column_hmdb_id=7,column_chebi_id=NA)
 }

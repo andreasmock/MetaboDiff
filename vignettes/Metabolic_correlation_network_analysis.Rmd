@@ -1,0 +1,190 @@
+---
+title: "Metabolic correlation network analysis"
+author:
+- name: Andreas Mock
+  affiliation: University Hospital and National Center for Tumor Diseases (NCT), Heidelberg
+  email: andreas.mock@med.uni-heidelberg.de
+package: MetaboDiff
+output:
+  BiocStyle::html_document:
+    toc: true
+    toc_float: true
+abstract: |
+    Correlation network analysis has been successfully applied in comparative transcriptomics to reveal changes in meaningful biological subpathways (modules). The first part of this document describes an adaptation for metabolomic data analysis. In the second part, the methodology is benchmarked and discussed in three case studies.
+vignette: |
+  %\VignetteIndexEntry{MetaboDiff}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}  
+---
+
+```{r loading, message=FALSE}
+library("MetaboDiff")
+```
+
+# Part I: Implementation of WGNCA for metabolomics
+
+The following workflow was adapted from the weighted gene co-expression analysis (WGCNA) proposed by Langfelder and Horvarth[^1] and makes use of the functions of the corresponding WGCNA R package[^2].
+
+As for the MetaboDiff tutorial, the implementation is demonstrated using the example data from a study by Priolo and colleagues in which the authors used the service of Metabolon&reg; to compare the tissue metabolome of 40 prostate cancers with 16 normal prostate specimens[^3]. The MetaboDiff packages contains this data within the object `met_example`.
+
+In the MetaboDiff tutorial, all steps for WGCNA were performed within a set of functions connected by pipes:
+
+* `diss_matrix` - construction of dissimilarity matrix
+* `identify_modules` - identification of metabolic correlation modules
+* `name_modules` - name metabolic correlation modules
+* `calculate_MS` - calculation of module signficance to relate sample traits to modules
+
+
+```{r, eval=F}
+met_example <- met_example %>%
+    diss_matrix %>%
+    identify_modules(min_module_size=5) %>%
+    name_modules(pathway_annotation="SUB_PATHWAY") %>%
+    calculate_MS(group_factors=c("tumor_normal","random_gender"))
+```
+
+The individual steps will be explained as follows.
+
+## Construction of dissimilarity matrix
+
+The first step in constructing a metabolic correlation network is the creation of a dissimilarity matrix. Biweight midcorrelation was used as a similiarity measure as it is more robust to outliers than the absolute correlation coefficient[^4]. This choice is important, as we do not expect metabolites to be correlated in all patients. 
+
+The core concept of the so called "weighted" correlation analysis by Langfelder and Horvarth is that instead of defining a "hard" threshold (e.g. an absolute correlation coefficient > 0.8) to decide whether a node to connected to another, the adjacency `a` is defined by raising the similarity `s` to a power `beta` ("soft" threshold):
+
+\begin{equation}
+a_{ij} = s_{ij}^\beta
+\end{equation}
+
+Lastly, the dissimilarity measure `w` is defined by
+
+\begin{equation}
+w_{ij} = 1 - a_{ij}    
+\end{equation}
+
+For detailed rationale of this approach, please see Zhang and Horvath[^1]. For metabolic networks, we identified that a beta value of 3 was the lowest power for which the scale-free topology of the topology was met_example.
+
+The function `diss_matrix` creates the dissimilarity measure for the `met_example` objects and saves it in the metadata slot
+
+```{r diss_matrix}
+met_example <- diss_matrix(met_example)
+```
+
+## Identification of metabolic correlation modules
+
+To identify metabolic correlation modules, metabolites are next clustered based on the dissimilarity measure where branches of the dendrogram correspond to modules.  Ultimately, modules are detected by applying a branch cutting method with a minimal module size of 5 metabolites. We employed the dynamic branch cut method developed by Langfelder and colleagues[^5], as constant height cutoffs exhibit suboptimal performance on complicated dendrograms. Figure \@ref(fig:WGCNA) shows the hierarchical clustering and corresponding modules after branch cutting.
+
+```{r identify}
+met_example <- identify_modules(met_example, 
+                       min_module_size=5)
+```
+
+```{r WGCNA, fig.cap="Hierarchical clustering of metabolites. The different colors represent the modules identified by the dynamic branch cutting method."}
+WGCNA::plotDendroAndColors(metadata(met_example)$tree, 
+                    metadata(met_example)$module_color_vector, 
+                    'Module colors', 
+                    dendroLabels = FALSE, 
+                    hang = 0.03,
+                    addGuide = TRUE, 
+                    guideHang = 0.05, main='')
+```
+
+The relation between the identified metabolic correlation modules can be visualized by a dendrogram of their *eigengenes* (figure \@ref(fig:eigengenes)). The module *eigengene* is defined as the first principal component of its expression matrix. It could be shown that the module *eigengene* is highly correlated with the gene that has the highest intramodular connectivity[^6].
+
+```{r eigengenes, fig.cap="Hierarchy of metabolic correlation modules as revealed by the clustering of module eigengenes. Each node represents a metabolic correlation module."}
+par(mar=c(2,2,2,2))
+ape::plot.phylo(ape::as.phylo(metadata(met_example)$METree),
+           type = 'fan',
+           show.tip.label = FALSE, 
+           main='')
+ape::tiplabels(frame = 'circle',
+          col='black', 
+          text=rep('',length(unique(metadata(met_example)$modules))), 
+          bg = WGCNA::labels2colors(0:21))
+```
+
+```{r modules}
+# number of metabolites per module
+table(metadata(met_example)$modules)
+```
+
+## Name metabolic correlation modules
+
+To enable a better interpretation of metabolic correlation modules, modules are named according to the most abundant pathway annotation in a module (figure \@ref(fig:naming)).
+
+```{r naming, fig.cap="Hierarchy of metabolic correlation modules. Modules are named according to the most abundant pathway annotation in a module. Module 0 comprises the two metabolites without a significant interaction."}
+# calculate module significance
+met_example <- name_modules(met_example,
+                   pathway_annotation = "SUB_PATHWAY")
+
+# plot phylogram with names
+ape::plot.phylo(ape::as.phylo(metadata(met_example)$METree), cex=0.9)
+```
+
+## Calculation of module signficance to relate sample traits to modules 
+
+An advantage of correlation network analysis is the possibility to integrate external information. 
+At the lowest hierarchical level, *gene significance* (GS) measures can be defined as the statistical significance (i.e. p-value, $p_i$) between the $i$-th node profile (metabolite) $x_i$ and the sample trait $T$
+
+\begin{equation}
+GS_i = -log~p_i
+\end{equation}
+
+*Module significance* in turn can be determined as the average absolute gene significance measure. This conceptual framework can be adapted to any research question.
+
+```{r calculate_MS}
+met_example <- calculate_MS(met_example,
+                   group_factors = c("tumor_normal","random_gender"))
+```
+
+Figure \@ref(fig:MSplot) shows that metabolic correlation module 2 (Creatine metabolism / Glutathione metabolism) was significantly associated with the tumor vs. normal comparison in the example data.
+
+```{r MSplot, fig.cap="Association of tumor vs normal trait with metabolic correlation modules. Module 2 (Creatine metabolism / Glutathione metabolism) showed a significant module significance."}
+MS_plot(met_example,
+        group_factor="tumor_normal",
+        label_colors=c("darkseagreen","dodgerblue"),
+        p_value_cutoff=0.05)
+```
+
+In line with the volcano plots, the random grouping did not result in a significant association (figure \@ref(fig:MSplot2))
+
+```{r MSplot2, fig.cap="Association of random trait with metabolic correlation modules. No significant module significance can be observed."}
+MS_plot(met_example,
+        group_factor="random_gender",
+        label_colors=c("brown","orange"),
+        p_value_cutoff=0.05)
+```
+
+# Part II: Benchmarking of metabolic correlation networks
+
+## Case study I
+
+Priolo, C., Pyne, S., Rose, J., Regan, E. R., Zadra, G., Photopoulos, C., et al. (2014). AKT1 and MYC Induce Distinctive Metabolic Fingerprints in Human Prostate Cancer. Cancer Research, 74(24), 7198–7204. http://doi.org/10.1158/0008-5472.CAN-14-1490
+
+Study design: Tissue metabolomics of 40 prostate cancers vs. 16 normal prostate specimens  
+Vendor: Metabolon  
+Data availability: 307 named metabolites  
+Name of object in MetaboDiff: `met_example`
+
+## Case study II
+
+
+
+## Case study III
+
+# Session information {.unnumbered}
+
+```{r}
+sessionInfo()
+```
+
+[^1]: Zhang, B., & Horvath, S. (2005). A general framework for weighted gene co-expression network analysis. Statistical Applications in Genetics and Molecular Biology, 4(1), Article17. http://doi.org/10.2202/1544-6115.1128
+
+[^2]: Langfelder, P., & Horvath, S. (2008). WGCNA: an R package for weighted correlation network analysis. BMC Bioinformatics, 9, 559–559. http://doi.org/10.1186/1471-2105-9-559
+
+[^3]: Priolo, C., Pyne, S., Rose, J., Regan, E. R., Zadra, G., Photopoulos, C., et al. (2014). AKT1 and MYC Induce Distinctive Metabolic Fingerprints in Human Prostate Cancer. Cancer Research, 74(24), 7198–7204. http://doi.org/10.1158/0008-5472.CAN-14-1490
+
+[^4]: Zheng, C.-H., Yuan, L., Sha, W., & Sun, Z.-L. (2014). Gene differential coexpression analysis based on biweight correlation and maximum clique. BMC Bioinformatics, 15 Suppl 15(Suppl 15), S3. http://doi.org/10.1186/1471-2105-15-S15-S3
+
+[^5]: Langfelder, P., Zhang, B., & Horvath, S. (2008). Defining clusters from a hierarchical cluster tree: the Dynamic Tree Cut package for R. Bioinformatics, 24(5), 719–720. http://doi.org/10.1093/bioinformatics/btm563.
+
+[^6]: Horvath, S., & Dong, J. (2008). Geometric Interpretation of Gene Coexpression Network Analysis. PLoS Computational Biology (PLOSCB) 4(8), 4(8), e1000117–e1000117. http://doi.org/10.1371/journal.pcbi.1000117

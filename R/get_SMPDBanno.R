@@ -1,14 +1,18 @@
 #' Annotation using Small Molecule Pathway Database (SMPDB)
 #'
-#' @param metabolite_ids vector of HMDB, KEGG or ChEBI identifiers.
-#' @return dataframe containing SMPDB annotation for metabolite identifiers.
+#' @param met MultiAssayExperiment object created with create_mae
+#' @param column_kegg_id Column number containing KEGG ids.
+#' @param column_hmbd_id Column number containing HMDB ids.
+#' @param column_chebi_id Column number containing ChEBI ids.
+#' @return MultiAssayExperiment object with SMPDB annotation
 #' @examples
-#' get_SMPDBanno(as.data.frame(rowData(met_example[["raw"]]))[,1:7],column_kegg_id=6,column_hmdb_id=7,column_chebi_id=NA)
+#' get_SMPDBanno(met,column_kegg_id=6,column_hmdb_id=7,column_chebi_id=NA)
 #' @export
-get_SMPDBanno <- function(rowData,
+get_SMPDBanno <- function(met,
                           column_kegg_id,
                           column_hmdb_id,
                           column_chebi_id) {
+    rowData = rowData(met[["raw"]])
     db = read.csv(system.file("extdata", "metabolites.csv", package = "MetaboDiff"))
     res = matrix(NA,nrow=nrow(rowData),ncol=ncol(db))
     colnames(res) = colnames(db)
@@ -32,5 +36,6 @@ get_SMPDBanno <- function(rowData,
     if(exists("temp3")){
         res[is.na(res[,1]),] = temp3[is.na(res[,1]),]
     }
-    cbind(rowData,res)
+    rowData(met[["raw"]]) = data.frame(rowData,res)
+    met
 }

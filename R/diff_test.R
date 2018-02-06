@@ -11,14 +11,14 @@ diff_test <- function(met, group_factors) {
     for (i in 1:length(group_factors)){
         df = genefilter::rowttests(assays(met)[["norm_imputed"]],
                        fac = as.factor(colData(met)[[group_factors[i]]]))
-        df_ihw = IHW::as.data.frame(IHW::ihw(df$p.value,
-                                   as.numeric(apply(assays(met)[["norm_imputed"]],1,var)),
-                                   alpha = 0.05,
-                                   nbins = 20))
-        res_df = data.frame(pval=df_ihw$pvalue,
-                            adj_pval=df_ihw$adj_pvalue,
-                            fold_change=df$dm,
-                            var=df_ihw$covariate)
+        adj_pval = p.adjust(df$p.value,method = "BH")
+        #df_ihw = IHW::as.data.frame(IHW::ihw(df$p.value,
+        #                           as.numeric(apply(assays(met)[["norm_imputed"]],1,var)),
+        #                           alpha = 0.05,
+        #                           nbins = 20))
+        res_df = data.frame(pval=df$p.value,
+                            adj_pval=adj_pval,
+                            fold_change=df$dm)
         metadata(met)[[paste0("ttest_",group_factors[i])]] = res_df
     }
     met
