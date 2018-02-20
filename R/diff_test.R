@@ -4,23 +4,33 @@
 #' @param group_factors character vector of group factors
 #' @return adds results from comparative analysis to metadata slot
 #' @examples
-#' diff_test(met_example, group_factors = c("tumor_normal","random_gender"))
+#' diff_test(met_example, group_factors = c("tumor_normal","random_gender"), references=c("T","random_male"))
 #' @export
 diff_test <- function(met, group_factors) {
     metadata(met) = vector("list",0)
+
     for (i in 1:length(group_factors)){
+        if(length(levels(as.factor(colData(met)[[group_factors[i]]])))>2){
+        coeff = sapply(1:nrow(assays(met)[["norm_imputed"]]),
+                     function(x) aov(assays(met)[["norm_imputed"]][x,]~as.factor(colData(met)[[group_factors[i]]]))$coefficient)
+        xlevels = unlist(aov(assays(met)[["norm_imputed"]][1,]~as.factor(colData(met)[[group_factors[i]]]))$xlevels)
+        res = sapply(1:nrow(assays(met)[["norm_imputed"]]),
+                     function(x) summary(aov(assays(met)[["norm_imputed"]][x,]~as.factor(colData(met)[[group_factors[i]]]))))
+        res_df = data.frame(pval=as.vector(sapply(sapply(res,"[",i=5),"[",i=1)),
+                            adj_pval=p.adjust(as.vector(sapply(sapply(res,"[",i=5),"[",i=1)),method = "fdr"),
+                            fold_change=coeff[2,])
+        metadata(met)[[paste0("anova_",group_factors[i],"_",paste(xlevels,collapse = "_vs_"))]] = res_df
+        } else {
+        xlev = levels(as.factor(colData(met)[[group_factors[i]]]))
         df = genefilter::rowttests(assays(met)[["norm_imputed"]],
-                       fac = as.factor(colData(met)[[group_factors[i]]]))
-        adj_pval = p.adjust(df$p.value,method = "BH")
-        #df_ihw = IHW::as.data.frame(IHW::ihw(df$p.value,
-        #                           as.numeric(apply(assays(met)[["norm_imputed"]],1,var)),
-        #                           alpha = 0.05,
-        #                           nbins = 20))
+                                   fac = as.factor(colData(met)[[group_factors[i]]]))
         res_df = data.frame(pval=df$p.value,
-                            adj_pval=adj_pval,
+                            adj_pval=p.adjust(df$p.value,method="fdr"),
                             fold_change=df$dm)
-        metadata(met)[[paste0("ttest_",group_factors[i])]] = res_df
+        metadata(met)[[paste0("ttest_",group_factors[i],"_",xlev[2],"_vs_",xlev[1])]] = res_df
+        }
     }
+
     met
 }
 

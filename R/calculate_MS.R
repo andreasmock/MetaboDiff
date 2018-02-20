@@ -8,11 +8,19 @@
 #' @export
 calculate_MS = function(met, group_factors){
     for (i in 1:length(group_factors)) {
-        df = metadata(met)[[paste0("ttest_", group_factors[i])]]
+        id = grep(group_factors[i],names(metadata(met)))[1]
+        df = metadata(met)[[id]]
         df$modules = metadata(met)$modules
-        res_df = plyr::ddply(df, "modules", plyr::summarise,
-                             av_adj_pval = mean(adj_pval),av_fold_change=mean(fold_change))
-        metadata(met)[[paste0("MS_", group_factors[i])]] = res_df
+        res_df = plyr::ddply(df, "modules", plyr::summarise, av_pval=mean(pval),
+                             av_adj_pval = mean(adj_pval))
+        res_df$av_fold_change = rep(0,nrow(res_df))
+        for(i in 1:nrow(df)){
+            if(sum(df$modules==(i-1)&df$pval<0.05)>0){
+            res_df$av_fold_change[i] = mean(df[df$modules==(i-1)&df$pval<0.05,"fold_change"],na.rm=TRUE)
+            }
+        }
+
+        metadata(met)[[paste0("MS_",group_factors[i])]] = res_df
     }
     met
 }

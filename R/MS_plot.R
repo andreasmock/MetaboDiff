@@ -6,10 +6,15 @@
 #' @examples
 #' MS_plot(met_example, group_factor = "tumor_normal",label_colors=c("darkseagreen","dodgerblue"),p_value_cutoff=0.05)
 #' @export
-MS_plot = function(met, group_factor,label_colors,p_value_cutoff){
+MS_plot = function(met, group_factor,label_colors,p_value_cutoff,p_adjust=TRUE){
+    id = grep(group_factor,names(metadata(met)))[2]
     tree = ape::as.phylo(metadata(met)$METree)
-    x = -log10(metadata(met)[[paste0("MS_",group_factor)]]$av_adj_pval)
-    x[metadata(met)[[paste0("MS_",group_factor)]]$av_fold_change<0] = x[metadata(met)[[paste0("MS_",group_factor)]]$av_fold_change<0]*(-1)
+    if(p_adjust==TRUE){
+        x = -log10(metadata(met)[[id]]$av_adj_pval)
+    } else {
+        x = -log10(metadata(met)[[id]]$av_pval)
+    }
+    x[metadata(met)[[id]]$av_fold_change<0] = x[metadata(met)[[id]]$av_fold_change<0]*(-1)
     names(x) = tree$tip.label
     obj=phytools::contMap(tree=tree,
                       x=x,

@@ -10,14 +10,14 @@ output:
     toc: true
     toc_float: true
 abstract: |
-    Correlation network analysis has been successfully applied in comparative transcriptomics to reveal changes in meaningful biological subpathways (modules). The first part of this document describes an adaptation for metabolomic data analysis. In the second part, the methodology is benchmarked and discussed in three case studies.
+    Correlation network analysis has been successfully applied in comparative transcriptomics to reveal changes in meaningful biological subpathways (modules). This markdown document describes an adaptation for metabolomic data analysis. 
 vignette: |
   %\VignetteIndexEntry{MetaboDiff}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}  
 ---
 
-```{r loading, message=FALSE}
+```{r loading, message=FALSE, warning=FALSE}
 library("MetaboDiff")
 ```
 
@@ -88,9 +88,9 @@ WGCNA::plotDendroAndColors(metadata(met_example)$tree,
                     guideHang = 0.05, main='')
 ```
 
-The relation between the identified metabolic correlation modules can be visualized by a dendrogram of their *eigengenes* (figure \@ref(fig:eigengenes)). The module *eigengene* is defined as the first principal component of its expression matrix. It could be shown that the module *eigengene* is highly correlated with the gene that has the highest intramodular connectivity[^6].
+The relation between the identified metabolic correlation modules can be visualized by a dendrogram of their *eigenmetabolite* (figure \@ref(fig:eigengenes)). The module *eigenmetabolite* is defined as the first principal component of the metabolic measurements in the respective module. 
 
-```{r eigengenes, fig.cap="Hierarchy of metabolic correlation modules as revealed by the clustering of module eigengenes. Each node represents a metabolic correlation module."}
+```{r eigengenes, fig.cap="Hierarchy of metabolic correlation modules as revealed by the clustering of module eigenmetabolite Each node represents a metabolic correlation module."}
 par(mar=c(2,2,2,2))
 ape::plot.phylo(ape::as.phylo(metadata(met_example)$METree),
            type = 'fan',
@@ -123,13 +123,13 @@ ape::plot.phylo(ape::as.phylo(metadata(met_example)$METree), cex=0.9)
 ## Calculation of module signficance to relate sample traits to modules 
 
 An advantage of correlation network analysis is the possibility to integrate external information. 
-At the lowest hierarchical level, *gene significance* (GS) measures can be defined as the statistical significance (i.e. p-value, $p_i$) between the $i$-th node profile (metabolite) $x_i$ and the sample trait $T$
+At the lowest hierarchical level, *metabolite significance* (MetS) measures can be defined as the statistical significance (i.e. p-value, $p_i$) between the $i$-th node profile (metabolite) $x_i$ and the sample trait $T$
 
 \begin{equation}
-GS_i = -log~p_i
+MetS_i = -log~p_i
 \end{equation}
 
-*Module significance* in turn can be determined as the average absolute gene significance measure. This conceptual framework can be adapted to any research question.
+*Module significance* (MS) in turn can be determined as the average absolute metabolite significance measure. This conceptual framework can be adapted to any research question.
 
 ```{r calculate_MS}
 met_example <- calculate_MS(met_example,
@@ -138,38 +138,43 @@ met_example <- calculate_MS(met_example,
 
 Figure \@ref(fig:MSplot) shows that metabolic correlation module 2 (Creatine metabolism / Glutathione metabolism) was significantly associated with the tumor vs. normal comparison in the example data.
 
-```{r MSplot, fig.cap="Association of tumor vs normal trait with metabolic correlation modules. Module 2 (Creatine metabolism / Glutathione metabolism) showed a significant module significance."}
+```{r MSplot, fig.cap="Association of tumor vs normal trait with metabolic correlation modules. Module 2 (Creatine metabolism / Glutathione metabolism) showed a significant module significance with a higher relative abundance in normal prostate tissues. P-values were adjusted for multiple testing."}
 MS_plot(met_example,
         group_factor="tumor_normal",
         label_colors=c("darkseagreen","dodgerblue"),
-        p_value_cutoff=0.05)
+        p_value_cutoff=0.05,
+        p_adjust=TRUE)
 ```
 
 In line with the volcano plots, the random grouping did not result in a significant association (figure \@ref(fig:MSplot2))
 
-```{r MSplot2, fig.cap="Association of random trait with metabolic correlation modules. No significant module significance can be observed."}
+```{r MSplot2, fig.cap="Association of random trait with metabolic correlation modules. No significant module significance can be observed. P-values were adjusted for multiple testing."}
 MS_plot(met_example,
         group_factor="random_gender",
         label_colors=c("brown","orange"),
-        p_value_cutoff=0.05)
+        p_value_cutoff=0.05,
+        p_adjust=TRUE)
 ```
 
-# Part II: Benchmarking of metabolic correlation networks
+## Exploration of individual metabolites within correlation module
 
-## Case study I
+Assessing the module significance for different sample traits facilitates an understanding of individual metabolic correlation modules. As for metabolomics, we are next interested in the role of the individual metabolite within module. To this end, Langfelder and Horvath suggest a 'fuzzy' measure of *module membership* defined as
 
-Priolo, C., Pyne, S., Rose, J., Regan, E. R., Zadra, G., Photopoulos, C., et al. (2014). AKT1 and MYC Induce Distinctive Metabolic Fingerprints in Human Prostate Cancer. Cancer Research, 74(24), 7198–7204. http://doi.org/10.1158/0008-5472.CAN-14-1490
+\begin{equation}
+K^q = |cor(x_i,E^q)|
+\end{equation}
 
-Study design: Tissue metabolomics of 40 prostate cancers vs. 16 normal prostate specimens  
-Vendor: Metabolon  
-Data availability: 307 named metabolites  
-Name of object in MetaboDiff: `met_example`
+where $x_i$ is the profile of metabolite $i$ and $E^q$ is the eigenmetabolite of module $q$. Based on this definition, $K$ describes how closely related metabolite $i$ is to module $q$. A meaningful visualization is consequently plotting the module membership over the p-value of the respective $MetS$ measure (`MOI_plot`). As a third dimension, the color is scaled according to the effect size (i.e. fold-change). 
 
-## Case study II
+```{r MOIplot, fig.cap="Association of individual metabolites within a modules of interest (e.g. module 2). Myo-inositol is most tightly linked to the module (e.g. eigenmetabolite).",message=FALSE, warning=FALSE}
+MOI_plot(met,
+         group_factor="tumor_normal",
+         MOI = 2,
+         label_colors=c("darkseagreen","dodgerblue"),
+         p_adjust = FALSE) + xlim(c(-1,8))
+```
 
-
-
-## Case study III
+For more information about the application and interpretation of metabolic correlation networks, please refer to the package vignette 'Case_study'. 
 
 # Session information {.unnumbered}
 

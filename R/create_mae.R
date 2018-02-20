@@ -8,7 +8,8 @@
 #' create_mae(assay,rowData,colData)
 #' @export
 create_mae = function(assay,rowData,colData){
-    se = SummarizedExperiment(assays=assay,
+    rownames(colData) = colnames(assay)
+    se = SummarizedExperiment(assays=as.matrix(assay),
                               rowData=rowData)
     experiment_list = list(raw=se)
     sampleMap = data.frame(primary=rownames(colData),

@@ -19,7 +19,7 @@ vignette: |
 
 # Getting started
 
-The `MetaboDiff` R package requires R version $\geq$ 3.4. 
+The `MetaboDiff` R package requires R version 3.4 or higher. 
 
 ## Installing dependencies
 
@@ -39,7 +39,7 @@ If you encounter problems installing `WGCNA`, please refer to the [developer pag
 
 ## Installing MetaboDiff
 
-`MetaboDiff` can be installed via Github
+`MetaboDiff` is available for all operating systems can be installed via Github
 
 ```{r installation, eval=FALSE}
 library("devtools")
@@ -48,7 +48,7 @@ install_github("andreasmock/MetaboDiff")
 
 and once installed loaded by
 
-```{r loading, message=FALSE}
+```{r loading, message=FALSE, warning=FALSE}
 library("MetaboDiff")
 ```
 
@@ -62,7 +62,7 @@ MetaboDiff requires three objects as input:
 * `rowData` - a dataframe containing the available metabolite annotation
 * `colData` - a dataframe containing sample metadata 
 
-Example data for the tutorial is derived from a study by Priolo and colleagues in which the authors used the service of Metabolon&reg; to compare the tissue metabolome of 40 prostate cancers with 16 normal prostate specimens[^1].
+Example data for the tutorial is derived from a study by Priolo and colleagues in which the authors used the service of Metabolon&reg; to compare the tissue metabolome of 61 prostate cancers with 25 normal prostate specimens[^1].
 
 Please make sure that the colnames (samples) of `assay` correspond to the rownames (patients) of `colData` and the rownames of `assay` to the rownames of `rowData`. 
 
@@ -96,13 +96,13 @@ In contrast to other high-throughput technologies, missing values are common in 
 
 The function `na_heatmap` visualizes the missing metabolite measurements across the samples. The name of the column in colData for grouping and the label colors for the two groups need to be specified.
 
-```{r heat, fig.cap="Missing metabolic measurements across the example data set. Missing measurements are visualized by a binary heatmap and barplots summarizing the fraction of missing measurement per metabolite and sample, respectively. In addition, the group label of interest (tumor (T) vs. normal (N)) is visualized. By default, metabolite measurements are only imputed if less than 40 percent are missing."}
+```{r heat, fig.cap="Missing metabolic measurements across the example data set. Missing measurements are visualized by a binary heatmap and barplots summarizing the fraction of missing measurement per metabolite and sample, respectively. In addition, the group label of interest (tumor (T) vs. normal (N)) is visualized."}
 na_heatmap(met,
            group_factor="tumor_normal",
            label_colors=c("darkseagreen","dodgerblue"))
 ```
 
-The example data supports the need for data imputation (figure \@ref(fig:heat)). It could be shown that k-nearest neighbor imputation minimizes the effects on the normality and variance of the data as long as the number of missing data does not exceed 40%[^4]. 
+The example data supports the need for data imputation (figure \@ref(fig:heat)). Imputation is performed by k-nearest neighbor imputation, which could be shown to minimize the effects on the normality and variance of the data as long as the number of missing data does not exceed 40%[^4]. 
 
 The function `knn_impute` adds the slot "impute" to the MultiAssayExperiment object that contains the imputed relative metabolite measurements for all metabolites with raw measurements in more than 60% of cases. We recommend a cutoff of 40% (i.e. 0.4). However the cutoff might be changed according to the discretion of the user.
 
@@ -110,18 +110,17 @@ The function `knn_impute` adds the slot "impute" to the MultiAssayExperiment obj
 (met = knn_impute(met,cutoff=0.4))
 ```
 
-As apparent form the summary description of the object `met` the imputed data matrix contains only 238 of the 307 original metabolites according to the cutoff of 40% missing values.
+As apparent form the summary description of the object `met` 69 metabolites are excluded in the slot `imputed` due to missing measurements in more than 40% of samples.
 
-## Removal of outliers
+## Outlier heatmap
 
-Before we normalize the data, we want to exclude outliers in the study set. To this end, the function `outlier_heatmap` is provided.
-The sample annotation shows the number of missing metabolites per sample as a proxy of the impact of imputation on clustering. 
-To showcase outliers, the hierarchical clustering tree is cut in 2 clusters (figure \@ref(fig:outlier)).
+Before we normalize the data, we want to exclude putative outliers in the study set. To this end, the function `outlier_heatmap` is provided. The sample annotation shows the number of missing metabolites per sample as a proxy of the impact of imputation on clustering. To identify outliers, the dendrogram also displays the results of a k-means clustering. In the examplary data we set 2 clusters (k=2; figure \@ref(fig:outlier)).
 
-```{r outlier, fig.cap="Hierarchical clustering of metabolite measurements. The tree is cut in 2 clusters. The user has the choice to exclude one cluster which he thinks might represent outliers. To determine the effect of imputation, a barplot displaying the fraction of missing metabolites is shown in the column annotation of the heatmap."}
+```{r outlier, fig.cap="Hierarchical clustering of metabolite measurements. The column annotation includes the results of the k-means clustering. The user has the choice to exclude one cluster which he thinks might represent outliers. To determine the effect of imputation, a barplot displaying the fraction of missing metabolites is shown in the column annotation of the heatmap."}
 outlier_heatmap(met,
                 group_factor="tumor_normal",
-                label_colors=c("darkseagreen","dodgerblue"))
+                label_colors=c("darkseagreen","dodgerblue"),
+                k=2)
 ```
 
 The imputed data of the example study set displays a cluster of 5 samples (cluster 1) with in average lower relative metabolite measurements. Due to the lack of batch information, this cannot be investigated further at this time. To demonstrate how a cluster can be removed, we apply the function `remove_cluster` to remove cluster 1:
@@ -167,41 +166,33 @@ The following table summarizes the biological questions that can be answered by 
 
 Question | Statistical Methodology
 ----------------------------------------- | ----------------------------------
+Are there outliers in my data set? | outlier heatmap including k-means clustering
 Are there metabolome-wide changes between samples? | unsupervised analyses (PCA, tSNE)
-Which individual metabolites show differential abundance between groups? | supervised analyses = hypothesis testing with correction for multiple testing
-Which metabolic subpathways differ between groups? | weighted correlation network analysis
-
+Which individual metabolites show differential abundance between groups? | hypothesis testing with correction for multiple testing
+Which metabolic subpathways (i.e. modules) differ between groups? | metabolic correlation network analysis - module significance (MS) plot
+Which metabolite is most closely related to the individual subpathway (i.e. modules)? | metabolic correlation network analysis - module of interest (MOI) plot
 
 ## Unsupervised analysis
 
 To explore the metabolomic profiles between samples in an unsupervised fashion, MetaboDiff offers PCA as a linear and tSNE as a non-linear dimension reduction technique.
 
-### PCA 
-
-```{r pca, message=FALSE, fig.cap="PCA plot. Samples are colored according to the group factor."}
+```{r pca, message=FALSE, fig.cap="Unsupervised analysis by means of PCA an tSNE plot. Samples are colored according to the group factor.", fig.wide=TRUE}
+source("http://peterhaschke.com/Code/multiplot.R")
+multiplot(
 pca_plot(met,
          group_factor="tumor_normal",
-             label_colors=c("darkseagreen","dodgerblue"))
-```
-
-A plot of the first two principal components (figure \@ref(fig:pca)) shows no metabolome-wide difference between the grouping of interest.
-
-### tSNE 
-
-
-```{r tSNE, message=FALSE, fig.cap="tSNE plot. Samples are colored according to the group factor."}
+             label_colors=c("darkseagreen","dodgerblue")),
 tsne_plot(met,
           group_factor="tumor_normal",
-             label_colors=c("darkseagreen","dodgerblue"))
+             label_colors=c("darkseagreen","dodgerblue")),
+cols=2)
 ```
 
-The first two dimensions (figure \@ref(fig:tSNE)) in the tSNE plot do not reveal a distinct difference in the metabolomic profiles between the normal and tumor samples.
+A plot of the first two principal components shows no metabolome-wide difference between the grouping of interest. The first two dimensions  in the tSNE plot do not reveal a distinct difference in the metabolomic profiles between the normal and tumor samples.
 
 ## Hypothesis testing
 
-Differential analysis for individual metabolites is performed using Student's T-Test. Correction for multiple testing is performed by Benjamini-Hochberg procedure. 
-
-Hypothesis testing will be performed for the sample grouping "tumor_normal", as well as for the randomly generated grouping "random_gender".
+Differential analysis for individual metabolites is performed with the function `diff_test`. If two groups are compared the function applies the Student`s T-Test. If there are more than two groups an analysis of variance (ANOVA) is applied. The p-values are corrected for multiple testing by the Benjamini-Hochberg procedure. Hypothesis testing can be simultaneously performed for multiple groups. In our example data, we perform the hypothesis testing for the sample grouping "tumor_normal", as well as for the randomly generated grouping "random_gender".
 
 ```{r diff_test, message=FALSE}
 met = diff_test(met,
@@ -214,22 +205,37 @@ The results of the hypothesis testing is saved in the metadata slot of the `Mult
 str(metadata(met), max.level=2)
 ```
 
-The columns of the result dataframe are the unadjusted p-value (pval), the adjusted p-value by independent hypothesis weighting (adj_pval), the Fold-Change between groups (fold_change).
+The name of the corresponding slot comprises the name of the group_factor (e.g. tumor_normal), as well as the factor levels of the grouping (N_vs_T). Here, the first factor is always the reference for the fold-change calculation. A positive fold-change in the grouping T_vs_N is hence a higher abundance in the normal (N) group.
 
-The comparative analysis can be visualized by means of a volcano plot (figure \@ref(fig:volcano1)).
+The columns of the result dataframe are the unadjusted p-value (pval), the adjusted p-value by Benjaminni-Hochberg procedure (adj_pval) and
+the fold-change between groups (fold_change).
 
-```{r volcano1, fig.cap="Volcano plot of comparison tumor vs normal. The dashed lines mark the significance thresholds adjusted p-value<0.05 and fold-change>1.5. Significant metabolites are colored."}
+The comparative analysis can be visualized by means of a volcano plot (figure \@ref(fig:volcano1)). The option `p_adjust` enables to choose if the p-value cutoff counts for unadjusted or adjusted p-values.
+
+```{r volcano1, fig.cap="Volcano plot of comparison tumor vs normal. The dashed lines mark the significance thresholds adjusted p-value<0.05 and fold-change>1.5. Significant metabolites are colored. The right plot displays p-values adjusted for muliple testing by the Bejamini-Hochberg procedure.", fig.wide=TRUE}
+par(mfrow=c(1,2))
 volcano_plot(met, 
              group_factor="tumor_normal",
-             label_colors=c("darkseagreen","dodgerblue"))
+             label_colors=c("darkseagreen","dodgerblue"),
+             p_adjust = FALSE)
+volcano_plot(met, 
+             group_factor="tumor_normal",
+             label_colors=c("darkseagreen","dodgerblue"),
+             p_adjust = TRUE)
 ```
 
 As a sanity check, we also display the volcano plot for the random grouping "random_gender" for which we do not expect the same number of significant metabolites.
 
-```{r volcano2, fig.cap="Volcano plot of random comparison. The dashed lines mark the significance thresholds adjusted p-value<0.05 and fold-change>1.5."}
+```{r volcano2, fig.cap="Volcano plot of random comparison. The dashed lines mark the significance thresholds adjusted p-value<0.05 and fold-change>1.5. The right plot displays p-values adjusted for muliple testing by the Bejamini-Hochberg procedure.", fig.wide=TRUE}
+par(mfrow=c(1,2))
 volcano_plot(met, 
              group_factor="random_gender",
-             label_colors=c("brown","orange"))
+             label_colors=c("brown","orange"),
+             p_adjust = FALSE)
+volcano_plot(met, 
+             group_factor="random_gender",
+             label_colors=c("brown","orange"),
+             p_adjust = TRUE)
 ```
 
 As expected, no metabolite was significantly different between the randomly assigned grouping male vs. female after multiple testing with a cutoff of p-value<0.05 (figure \@ref(fig:volcano2)).
@@ -257,36 +263,55 @@ met <- met %>%
 
 ### Association of sample traits with correlation modules
 
-The following plots illustrate the association of the sample trait of interest (tumor vs. normal) with the metabolic correlation modules derived form the data.
+The following plots illustrate the association of the sample trait of interest (tumor vs. normal) with the metabolic correlation modules derived form the data. The enrichment is color-coded according to the average fold-change difference within the module. The option `p_adjust` enables to choose if the p-value cutoff counts for unadjusted or adjusted p-values.
 
-```{r MSplot, fig.cap="Association of tumor vs normal trait with metabolic correlation modules. Module 2 (Creatine metabolism / Glutathione metabolism) showed a significant module significance."}
+```{r MSplot, fig.cap="Association of tumor vs normal trait with metabolic correlation modules. Module 2 (Creatine metabolism / Glutathione metabolism) showed a significant module significance with a higher relative abundance in normal prostate tissues. P-values were adjusted for multiple testing."}
 MS_plot(met,
         group_factor="tumor_normal",
         label_colors=c("darkseagreen","dodgerblue"),
-        p_value_cutoff=0.05)
+        p_value_cutoff=0.05,
+        p_adjust=TRUE)
 ```
 
-```{r MSplot2, fig.cap="Association of random trait with metabolic correlation modules. No significant module significance can be observed."}
+```{r MSplot2, fig.cap="Association of tumor vs normal trait with metabolic correlation modules. Module 2 (Creatine metabolism / Glutathione metabolism) showed a significant module significance with a higher relative abundance in normal prostate tissues. P-values were not adjusted for multiple testing."}
+MS_plot(met,
+        group_factor="tumor_normal",
+        label_colors=c("darkseagreen","dodgerblue"),
+        p_value_cutoff=0.05,
+        p_adjust=FALSE)
+```
+
+```{r MSplot3, fig.cap="Association of random trait with metabolic correlation modules. No significant module significance can be observed. P-values were not adjusted for multiple testing."}
 MS_plot(met,
         group_factor="random_gender",
         label_colors=c("brown","orange"),
-        p_value_cutoff=0.05)
+        p_value_cutoff=0.05,
+        p_adjust = TRUE)
 ```
 
-In line with the volcano plots, the random grouping did not result in a significant association (figure \@ref(fig:MSplot2))
+```{r MSplot4, fig.cap="Association of random trait with metabolic correlation modules. No significant module significance can be observed. P-values were not adjusted for multiple testing."}
+MS_plot(met,
+        group_factor="random_gender",
+        label_colors=c("brown","orange"),
+        p_value_cutoff=0.05,
+        p_adjust=FALSE)
+```
 
-### Exploration of module of interest
+In line with the volcano plots, the random grouping did not result in a significant association (figure \@ref(fig:MSplot3))
 
-The relationship of metabolites within a correlation module can be explored by means of a module of interest (MOI) plot:
+### Exploration of individual metabolites within correlation module
 
-```{r}
+The relationship of individual metabolites within a correlation module can be explored by means of a module of interest (MOI) plot, where the so called module membership is plotted over the p-value. In short, the module membership tells us, how closely related a metabolite is to the corresponding module and to other metabolites.
+
+```{r MOIplot, fig.cap="Association of individual metabolites within a modules of interest (e.g. module 2). Myo-inositol is most tightly linked to the module (e.g. eigenmetabolite).",message=FALSE, warning=FALSE}
 MOI_plot(met,
          group_factor="tumor_normal",
          MOI = 2,
-         label_colors=c("darkseagreen","dodgerblue"))
+         label_colors=c("darkseagreen","dodgerblue"),
+         p_adjust = FALSE) + xlim(c(-1,8))
 ```
 
-The full case study of the example data set is part of the package vignette "Metabolic correlation network analysis".
+For more information regarding the correlation network methodology, see the vignette `Metabolic_correlation_netork_analysis`. A full case study applying metabolic correlation network analysis is described in the vignette `Case_study`.
 
 # Session information {.unnumbered}
 
