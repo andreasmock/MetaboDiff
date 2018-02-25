@@ -4,7 +4,7 @@
 \alias{volcano_plot}
 \title{Volcano plot of differential analysis}
 \usage{
-volcano_plot(met, group_factor, label_colors)
+volcano_plot(met, group_factor, label_colors, p_adjust = TRUE, ...)
 }
 \arguments{
 \item{met}{fully preprocessed MultiAssayExperiment object with slots "raw", "imputed", "norm" and "norm_imputed"}
@@ -20,5 +20,5 @@ Volcano plot of differential analysis
 Volcano plot of differential analysis
 }
 \examples{
-volcano_plot(met_example, group_factor="tumor_normal", label_colors=c("darkseagreen","dodgerblue"))
+volcano_plot(met_example, group_factor="tumor_normal", label_colors=c("darkseagreen","dodgerblue"),p_adjust=TRUE)
 }

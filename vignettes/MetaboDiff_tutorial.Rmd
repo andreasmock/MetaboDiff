@@ -10,7 +10,7 @@ output:
     toc: true
     toc_float: true
 abstract: |
-    Comparative non-targeted metabolomics comes of age through commercial vendors offering metabolomics for translational researchers outside the mass spectrometry field. The MetaboDiff packages aims to provide a low-level entry to differential metabolomic analysis by starting off with the table of relative metabolite measurements. In addition, it introduces the usage of weighted correlation network analysis for metabolomics.
+    Comparative non-targeted metabolomics comes of age through commercial vendors offering metabolomics for translational researchers outside the mass spectrometry field. The MetaboDiff package aims to provide a low-level entry to differential metabolomic analysis by starting off with the table of relative metabolite measurements. In addition, it introduces the usage of weighted correlation network analysis for metabolomics.
 vignette: |
   %\VignetteIndexEntry{MetaboDiff}
   %\VignetteEngine{knitr::rmarkdown}
@@ -23,7 +23,7 @@ The `MetaboDiff` R package requires R version 3.4 or higher.
 
 ## Installing dependencies
 
-CRAN occasionally fails to compile the `WGCNA` package for Mac OS X. Hence, it is recommended to install the package before installing `MetaboDiff`:
+CRAN occasionally fails to compile the `WGCNA` package for Mac OS X. Hence, it is recommended to install the package before installing `MetaboDiff`.
 
 ```{r dependencies, eval=FALSE}
 install.packages("WGCNA")
@@ -39,7 +39,7 @@ If you encounter problems installing `WGCNA`, please refer to the [developer pag
 
 ## Installing MetaboDiff
 
-`MetaboDiff` is available for all operating systems can be installed via Github
+`MetaboDiff` is available for all operating systems and can be installed via Github
 
 ```{r installation, eval=FALSE}
 library("devtools")
@@ -263,20 +263,11 @@ met <- met %>%
 
 ### Association of sample traits with correlation modules
 
-The following plots illustrate the association of the sample trait of interest (tumor vs. normal) with the metabolic correlation modules derived form the data. The enrichment is color-coded according to the average fold-change difference within the module. The option `p_adjust` enables to choose if the p-value cutoff counts for unadjusted or adjusted p-values.
-
-```{r MSplot, fig.cap="Association of tumor vs normal trait with metabolic correlation modules. Module 2 (Creatine metabolism / Glutathione metabolism) showed a significant module significance with a higher relative abundance in normal prostate tissues. P-values were adjusted for multiple testing."}
-MS_plot(met,
-        group_factor="tumor_normal",
-        label_colors=c("darkseagreen","dodgerblue"),
-        p_value_cutoff=0.05,
-        p_adjust=TRUE)
-```
+The following plots illustrate the association of the sample trait of interest (tumor vs. normal) with the metabolic correlation modules derived form the data. The option `p_adjust` enables to choose if the p-value cutoff counts for unadjusted or adjusted p-values.
 
 ```{r MSplot2, fig.cap="Association of tumor vs normal trait with metabolic correlation modules. Module 2 (Creatine metabolism / Glutathione metabolism) showed a significant module significance with a higher relative abundance in normal prostate tissues. P-values were not adjusted for multiple testing."}
 MS_plot(met,
         group_factor="tumor_normal",
-        label_colors=c("darkseagreen","dodgerblue"),
         p_value_cutoff=0.05,
         p_adjust=FALSE)
 ```
@@ -284,26 +275,17 @@ MS_plot(met,
 ```{r MSplot3, fig.cap="Association of random trait with metabolic correlation modules. No significant module significance can be observed. P-values were not adjusted for multiple testing."}
 MS_plot(met,
         group_factor="random_gender",
-        label_colors=c("brown","orange"),
         p_value_cutoff=0.05,
-        p_adjust = TRUE)
+        p_adjust = FALSE)
 ```
 
-```{r MSplot4, fig.cap="Association of random trait with metabolic correlation modules. No significant module significance can be observed. P-values were not adjusted for multiple testing."}
-MS_plot(met,
-        group_factor="random_gender",
-        label_colors=c("brown","orange"),
-        p_value_cutoff=0.05,
-        p_adjust=FALSE)
-```
-
-In line with the volcano plots, the random grouping did not result in a significant association (figure \@ref(fig:MSplot3))
+In line with the volcano plots, the random grouping did not result in a significant association (figure \@ref(fig:MSplot3)).
 
 ### Exploration of individual metabolites within correlation module
 
 The relationship of individual metabolites within a correlation module can be explored by means of a module of interest (MOI) plot, where the so called module membership is plotted over the p-value. In short, the module membership tells us, how closely related a metabolite is to the corresponding module and to other metabolites.
 
-```{r MOIplot, fig.cap="Association of individual metabolites within a modules of interest (e.g. module 2). Myo-inositol is most tightly linked to the module (e.g. eigenmetabolite).",message=FALSE, warning=FALSE}
+```{r MOIplot, fig.cap="Association of individual metabolites within module 2. Myo-inositol is most tightly linked to the module (e.g. eigenmetabolite).",message=FALSE, warning=FALSE}
 MOI_plot(met,
          group_factor="tumor_normal",
          MOI = 2,

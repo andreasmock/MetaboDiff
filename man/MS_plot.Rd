@@ -4,7 +4,8 @@
 \alias{MS_plot}
 \title{Module significance plot}
 \usage{
-MS_plot(met, group_factor, label_colors, p_value_cutoff)
+MS_plot(met, group_factor, p_value_cutoff, fold_change_cutoff,
+  p_adjust = FALSE)
 }
 \arguments{
 \item{met}{fully preprocessed MultiAssayExperiment object with slots "raw", "imputed", "norm" and "norm_imputed"}
@@ -18,5 +19,5 @@ Module significance plot
 Module significance plot
 }
 \examples{
-MS_plot(met_example, group_factor = "tumor_normal",label_colors=c("darkseagreen","dodgerblue"),p_value_cutoff=0.05)
+MS_plot(met_example, group_factor = "tumor_normal",p_value_cutoff=0.05, p_adjust=FALSE)
 }

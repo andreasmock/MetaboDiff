@@ -17,7 +17,7 @@ MOI_plot = function(met, group_factor, MOI, label_colors, p_adjust=TRUE, ...){
         df = data.frame(mets=mets,x=x,y=y,fc=fc)
         ggplot(df, aes(x=x,y=y,color=fc)) +
             geom_point() +
-            scale_color_continuous(low=label_colors[1],high=label_colors[2]) +
+            scale_color_gradient2(low=label_colors[1],mid="grey",high=label_colors[2],midpoint=0) +
             geom_text(aes(label=mets), vjust=1.5) +
             theme_classic() +
             xlab("adjusted p-value (-log10)") +
@@ -33,7 +33,7 @@ MOI_plot = function(met, group_factor, MOI, label_colors, p_adjust=TRUE, ...){
         df = data.frame(mets=mets,x=x,y=y,fc=fc)
         ggplot(df, aes(x=x,y=y,color=fc)) +
             geom_point() +
-            scale_color_continuous(low=label_colors[1],high=label_colors[2]) +
+            scale_color_gradient2(low=label_colors[1],mid="black",high=label_colors[2],midpoint=0) +
             geom_text(aes(label=mets), vjust=1.5) +
             theme_classic() +
             xlab("p-value (-log10)") +

@@ -4,7 +4,7 @@
 \alias{MOI_plot}
 \title{Module of interest plot}
 \usage{
-MOI_plot(met, group_factor, MOI, label_colors)
+MOI_plot(met, group_factor, MOI, label_colors, p_adjust = TRUE, ...)
 }
 \arguments{
 \item{met}{fully preprocessed MultiAssayExperiment object with slots "raw", "imputed", "norm" and "norm_imputed"}
@@ -20,5 +20,5 @@ plot exploring the module of interest
 Module of interest plot
 }
 \examples{
-MOI_plot(met_example, group_factor = "tumor_normal", MOI=2, label_colors=c("darkseagreen","dodgerblue"))
+MOI_plot(met_example, group_factor = "tumor_normal", MOI=2, label_colors=c("darkseagreen","dodgerblue"), p_adjust=TRUE)
 }

@@ -4,7 +4,7 @@
 \alias{outlier_heatmap}
 \title{Heatmap to visualize outliers in the study set}
 \usage{
-outlier_heatmap(met, group_factor, label_colors)
+outlier_heatmap(met, group_factor, label_colors, k)
 }
 \arguments{
 \item{met}{MultiAssayExperiment object with slots "raw" and "imputed"}
@@ -20,5 +20,5 @@ heatmap to visualize outliers in the study set
 Heatmap to visualize outliers in the study set
 }
 \examples{
-outlier_heatmap(met_example, group_factor="tumor_normal", label_colors=c("darkseagreen","dodgerblue"))
+outlier_heatmap(met_example, group_factor="tumor_normal", label_colors=c("darkseagreen","dodgerblue"), k=2)
 }

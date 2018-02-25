@@ -1,8 +1,8 @@
 # MetaboDiff 
 
-Comparative non-targeted metabolomics comes of age through commercial vendors offering metabolomics for translational researchers outside the mass spectrometry field. The MetaboDiff packages aims to provide a low-level entry to differential metabolomic analysis by starting off with the table of relative metabolite quantifications. 
+Comparative metabolomics comes of age through commercial vendors offering metabolomics for translational researchers outside the mass spectrometry field. The MetaboDiff packages aims to provide a low-level entry to differential metabolomic analysis with R by starting off with the table of metabolite measurements. As a key functionality, MetaboDiffs offers the exploration of sample traits in a data-derived metabolic correlation network.
 
-The package tutorial can be found [here](https://rawgit.com/andreasmock/MetaboDiff/master/vignettes/MetaboDiff_tutorial.html)
+[1) MetaboDiff tutorial](https://rawgit.com/andreasmock/MetaboDiff/master/vignettes/MetaboDiff_tutorial.html)
 
 ******
 

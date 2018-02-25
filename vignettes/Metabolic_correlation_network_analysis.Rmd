@@ -35,7 +35,7 @@ In the MetaboDiff tutorial, all steps for WGCNA were performed within a set of f
 * `calculate_MS` - calculation of module signficance to relate sample traits to modules
 
 
-```{r, eval=F}
+```{r, eval=FALSE}
 met_example <- met_example %>%
     diss_matrix %>%
     identify_modules(min_module_size=5) %>%
@@ -90,7 +90,7 @@ WGCNA::plotDendroAndColors(metadata(met_example)$tree,
 
 The relation between the identified metabolic correlation modules can be visualized by a dendrogram of their *eigenmetabolite* (figure \@ref(fig:eigengenes)). The module *eigenmetabolite* is defined as the first principal component of the metabolic measurements in the respective module. 
 
-```{r eigengenes, fig.cap="Hierarchy of metabolic correlation modules as revealed by the clustering of module eigenmetabolite Each node represents a metabolic correlation module."}
+```{r eigengenes, fig.cap="Hierarchy of metabolic correlation modules as revealed by the clustering of module eigenmetabolite. Each node represents a metabolic correlation module."}
 par(mar=c(2,2,2,2))
 ape::plot.phylo(ape::as.phylo(metadata(met_example)$METree),
            type = 'fan',
@@ -138,22 +138,20 @@ met_example <- calculate_MS(met_example,
 
 Figure \@ref(fig:MSplot) shows that metabolic correlation module 2 (Creatine metabolism / Glutathione metabolism) was significantly associated with the tumor vs. normal comparison in the example data.
 
-```{r MSplot, fig.cap="Association of tumor vs normal trait with metabolic correlation modules. Module 2 (Creatine metabolism / Glutathione metabolism) showed a significant module significance with a higher relative abundance in normal prostate tissues. P-values were adjusted for multiple testing."}
+```{r MSplot, fig.cap="Association of tumor vs normal trait with metabolic correlation modules. Module 2 (Creatine metabolism / Glutathione metabolism) showed a significant module significance with a higher relative abundance in normal prostate tissues. P-values were not adjusted for multiple testing."}
 MS_plot(met_example,
         group_factor="tumor_normal",
-        label_colors=c("darkseagreen","dodgerblue"),
         p_value_cutoff=0.05,
-        p_adjust=TRUE)
+        p_adjust=FALSE)
 ```
 
 In line with the volcano plots, the random grouping did not result in a significant association (figure \@ref(fig:MSplot2))
 
-```{r MSplot2, fig.cap="Association of random trait with metabolic correlation modules. No significant module significance can be observed. P-values were adjusted for multiple testing."}
+```{r MSplot2, fig.cap="Association of random trait with metabolic correlation modules. No significant module significance can be observed. P-values were not adjusted for multiple testing."}
 MS_plot(met_example,
         group_factor="random_gender",
-        label_colors=c("brown","orange"),
         p_value_cutoff=0.05,
-        p_adjust=TRUE)
+        p_adjust=FALSE)
 ```
 
 ## Exploration of individual metabolites within correlation module
@@ -166,8 +164,8 @@ K^q = |cor(x_i,E^q)|
 
 where $x_i$ is the profile of metabolite $i$ and $E^q$ is the eigenmetabolite of module $q$. Based on this definition, $K$ describes how closely related metabolite $i$ is to module $q$. A meaningful visualization is consequently plotting the module membership over the p-value of the respective $MetS$ measure (`MOI_plot`). As a third dimension, the color is scaled according to the effect size (i.e. fold-change). 
 
-```{r MOIplot, fig.cap="Association of individual metabolites within a modules of interest (e.g. module 2). Myo-inositol is most tightly linked to the module (e.g. eigenmetabolite).",message=FALSE, warning=FALSE}
-MOI_plot(met,
+```{r MOIplot, fig.cap="Association of individual metabolites within module 2. Myo-inositol is most tightly linked to the module (e.g. eigenmetabolite).",message=FALSE, warning=FALSE}
+MOI_plot(met_example,
          group_factor="tumor_normal",
          MOI = 2,
          label_colors=c("darkseagreen","dodgerblue"),
