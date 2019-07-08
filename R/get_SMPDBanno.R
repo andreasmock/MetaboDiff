@@ -6,7 +6,7 @@
 #' @param column_chebi_id Column number containing ChEBI ids.
 #' @return MultiAssayExperiment object with SMPDB annotation
 #' @examples
-#' get_SMPDBanno(met,column_kegg_id=6,column_hmdb_id=7,column_chebi_id=NA)
+#' get_SMPDBanno(met_example,column_kegg_id=6,column_hmdb_id=7,column_chebi_id=NA)
 #' @export
 get_SMPDBanno <- function(met,
                           column_kegg_id,

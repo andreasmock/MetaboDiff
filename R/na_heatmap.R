@@ -32,7 +32,7 @@ na_heatmap = function(met, group_factor, label_colors) {
     ha = Heatmap(matrix = met_na[order(row_na),order(col_na)],
                  name="missing",
                  col=c("lightgrey","brown"),
-                 cluster_row = FALSE,
+                 cluster_rows = FALSE,
                  cluster_columns = FALSE,
                  column_title = "samples",
                  column_title_side = "bottom",
@@ -40,7 +40,6 @@ na_heatmap = function(met, group_factor, label_colors) {
                  show_row_names = FALSE,
                  heatmap_legend_param = list(labels=c("no","yes")),
                  row_title= "metabolites",
-                 bottom_annotation = colanno,
-                 bottom_annotation_height = unit(1.5,"cm"))
+                 bottom_annotation = colanno)
     ha + rowanno
 }

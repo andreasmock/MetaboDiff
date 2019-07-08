@@ -4,7 +4,7 @@
 #' @param cutoff Cutoff at which fraction of missing values, a metabolite should be removed from the data. The recommended cutoff is 0.4, e.g. 40 percent.
 #' @return MultiAssayExperiment object with slots "raw" and "imputed"
 #' @examples
-#' knn_impute(met_example, cutoff=0.4)
+#' knn_impute(create_mae(assay,rowData,colData), cutoff=0.4)
 #' @export
 knn_impute <- function(met, cutoff) {
     met_temp = met[["raw"]]

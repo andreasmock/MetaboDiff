@@ -18,5 +18,5 @@ adds module significance measures to metadata slot
 Calculate module significance
 }
 \examples{
-calculare_MS(met_example, group_factors = c("tumor_normal","random_gender"))
+calculate_MS(met_example, group_factors = c("tumor_normal","random_gender"))
 }

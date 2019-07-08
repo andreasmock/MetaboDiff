@@ -4,7 +4,7 @@
 #' @param group_factors character vector of group factors
 #' @return adds results from comparative analysis to metadata slot
 #' @examples
-#' diff_test(met_example, group_factors = c("tumor_normal","random_gender"), references=c("T","random_male"))
+#' diff_test(met_example, group_factors = c("tumor_normal","random_gender"))
 #' @export
 diff_test <- function(met, group_factors) {
     metadata(met) = vector("list",0)

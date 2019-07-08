@@ -2,8 +2,8 @@
 title: "MetaboDiff tutorial"
 author:
 - name: Andreas Mock
-  affiliation: University Hospital and National Center for Tumor Diseases (NCT), Heidelberg
-  email: andreas.mock@med.uni-heidelberg.de
+  affiliation: National Center for Tumor Diseases (NCT), Heidelberg
+  email: andreas.mock@nct-heidelberg.de
 package: MetaboDiff
 output:
   BiocStyle::html_document:
@@ -19,7 +19,7 @@ vignette: |
 
 # Getting started
 
-The `MetaboDiff` R package requires R version 3.4 or higher. 
+The `MetaboDiff` R package requires R version 3.52 or higher. 
 
 ## Installing dependencies
 
@@ -49,7 +49,7 @@ install_github("andreasmock/MetaboDiff")
 and once installed loaded by
 
 ```{r loading, message=FALSE, warning=FALSE}
-library("MetaboDiff")
+library(MetaboDiff)
 ```
 
 # Part I: Data processing

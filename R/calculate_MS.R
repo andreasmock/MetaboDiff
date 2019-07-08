@@ -4,7 +4,7 @@
 #' @return adds module significance measures to metadata slot
 #' @param group_factor name of column in colData for grouping
 #' @examples
-#' calculare_MS(met_example, group_factors = c("tumor_normal","random_gender"))
+#' calculate_MS(met_example, group_factors = c("tumor_normal","random_gender"))
 #' @export
 calculate_MS = function(met, group_factors){
     for (i in 1:length(group_factors)) {

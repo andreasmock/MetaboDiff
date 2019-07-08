@@ -9,7 +9,7 @@
 #' @export
 volcano_plot <- function(met, group_factor, label_colors,p_adjust=TRUE, ...) {
 
-    id = grep(group_factor,names(metadata(met)))
+    id = grep(group_factor,names(metadata(met)))[1]
     df=metadata(met)[[id]]
     name = names(metadata(met))[id]
     lv = levels(as.factor(colData(met)[[group_factor]]))

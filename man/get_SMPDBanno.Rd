@@ -22,5 +22,5 @@ MultiAssayExperiment object with SMPDB annotation
 Annotation using Small Molecule Pathway Database (SMPDB)
 }
 \examples{
-get_SMPDBanno(met,column_kegg_id=6,column_hmdb_id=7,column_chebi_id=NA)
+get_SMPDBanno(met_example,column_kegg_id=6,column_hmdb_id=7,column_chebi_id=NA)
 }

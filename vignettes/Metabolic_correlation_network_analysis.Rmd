@@ -2,8 +2,8 @@
 title: "Metabolic correlation network analysis"
 author:
 - name: Andreas Mock
-  affiliation: University Hospital and National Center for Tumor Diseases (NCT), Heidelberg
-  email: andreas.mock@med.uni-heidelberg.de
+  affiliation: National Center for Tumor Diseases (NCT), Heidelberg
+  email: andreas.mock@nct-heidelberg.de
 package: MetaboDiff
 output:
   BiocStyle::html_document:
@@ -18,7 +18,7 @@ vignette: |
 ---
 
 ```{r loading, message=FALSE, warning=FALSE}
-library("MetaboDiff")
+library(MetaboDiff)
 ```
 
 # Part I: Implementation of WGNCA for metabolomics

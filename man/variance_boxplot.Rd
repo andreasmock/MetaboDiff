@@ -18,5 +18,5 @@ Boxplot comparing the distribution of variance in metabolic measurements across 
 Boxplot comparing the distribution of variance in metabolic measurements across the pathways
 }
 \examples{
-variance_boxplot(met_example, rowAnnotation="SMPDB|Pathway.Name")
+variance_boxplot(met_example, rowAnnotation="SMPDB.Pathway.Name")
 }

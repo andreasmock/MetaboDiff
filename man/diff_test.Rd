@@ -18,5 +18,5 @@ adds results from comparative analysis to metadata slot
 Perform comparative analysis using T-Test
 }
 \examples{
-diff_test(met_example, group_factors = c("tumor_normal","random_gender"), references=c("T","random_male"))
+diff_test(met_example, group_factors = c("tumor_normal","random_gender"))
 }

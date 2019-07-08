@@ -5,7 +5,7 @@
 #' @param label_colors vector of colors for levels of sample_label
 #' @return pca plot
 #' @examples
-#' pca(met_example, group_factor="tumor_normal", label_colors=c("darkseagreen","dodgerblue"))
+#' pca_plot(met_example, group_factor="tumor_normal", label_colors=c("darkseagreen","dodgerblue"))
 #' @export
 pca_plot <- function(met, group_factor, label_colors) {
     pca = prcomp(t(assay(met[["norm_imputed"]])))

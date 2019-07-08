@@ -16,5 +16,5 @@ MultiAssayExperiment object with slots "raw", "imputed", "norm" and "norm_impute
 Normalize metabolomic data by vsn
 }
 \examples{
-normalize_met(met)
+c
 }

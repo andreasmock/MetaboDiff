@@ -2,8 +2,8 @@
 title: "MetaboDiff case study"
 author:
 - name: Andreas Mock
-  affiliation: University Hospital and National Center for Tumor Diseases (NCT), Heidelberg
-  email: andreas.mock@med.uni-heidelberg.de
+  affiliation: National Center for Tumor Diseases (NCT), Heidelberg
+  email: andreas.mock@nct-heidelberg.de
 package: MetaboDiff
 output:
   BiocStyle::html_document:

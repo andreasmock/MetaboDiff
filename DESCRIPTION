@@ -1,12 +1,12 @@
 Package: MetaboDiff
 Type: Package
 Title: An R package for differential metabolomic analysis
-Version: 0.9.2
+Version: 0.9.3
 Author: Andreas Mock
 Maintainer: <andreas.mock@med.uni-heidelberg.de>
 Description: The MetaboDiff packages aims to provide a low-level entry to differential metabolomic analysis by starting off with the table of relative metabolite quantifications provided by commercial vendors or core facilities. 
 Depends:
-    R (>= 3.4),
+    R (>= 3.5.2),
     SummarizedExperiment,
     MultiAssayExperiment,
     ComplexHeatmap,
@@ -20,11 +20,12 @@ Imports:
     dynamicTreeCut,
     plyr,
     phytools,
-    tsne
+    tsne,
+    genefilter
 VignetteBuilder: knitr
 Suggests: BiocStyle, knitr, rmarkdown
 License: MIT
 Encoding: UTF-8
 LazyData: true
-RoxygenNote: 6.0.1
+RoxygenNote: 6.1.1
 biocViews:

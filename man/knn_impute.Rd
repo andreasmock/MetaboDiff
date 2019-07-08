@@ -18,5 +18,5 @@ MultiAssayExperiment object with slots "raw" and "imputed"
 Impute metabolomic data by k-nearest neighbour imputation
 }
 \examples{
-knn_impute(met_example, cutoff=0.4)
+knn_impute(create_mae(assay,rowData,colData), cutoff=0.4)
 }
