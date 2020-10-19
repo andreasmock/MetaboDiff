@@ -1,12 +1,12 @@
 Package: MetaboDiff
 Type: Package
 Title: An R package for differential metabolomic analysis
-Version: 0.9.3
+Version: 0.9.4
 Author: Andreas Mock
-Maintainer: <andreas.mock@med.uni-heidelberg.de>
+Maintainer: <andreas.mock@nct-heidelberg.de>
 Description: The MetaboDiff packages aims to provide a low-level entry to differential metabolomic analysis by starting off with the table of relative metabolite quantifications provided by commercial vendors or core facilities. 
 Depends:
-    R (>= 3.5.2),
+    R (>= 4.0.2),
     SummarizedExperiment,
     MultiAssayExperiment,
     ComplexHeatmap,

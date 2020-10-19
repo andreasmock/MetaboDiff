@@ -24,7 +24,8 @@ diff_test <- function(met, group_factors) {
         xlev = levels(as.factor(colData(met)[[group_factors[i]]]))
         df = genefilter::rowttests(assays(met)[["norm_imputed"]],
                                    fac = as.factor(colData(met)[[group_factors[i]]]))
-        res_df = data.frame(pval=df$p.value,
+        res_df = data.frame(metabolite=rownames(df),
+                            pval=df$p.value,
                             adj_pval=p.adjust(df$p.value,method="fdr"),
                             fold_change=df$dm)
         metadata(met)[[paste0("ttest_",group_factors[i],"_",xlev[2],"_vs_",xlev[1])]] = res_df

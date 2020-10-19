@@ -19,7 +19,7 @@ vignette: |
 
 # Getting started
 
-The `MetaboDiff` R package requires R version 3.52 or higher. 
+The `MetaboDiff` R package requires R version 4.0.2 or higher. 
 
 ## Installing dependencies
 
