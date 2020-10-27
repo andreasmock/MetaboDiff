@@ -18,7 +18,7 @@ diff_test <- function(met, group_factors) {
                      function(x) summary(aov(assays(met)[["norm_imputed"]][x,]~as.factor(colData(met)[[group_factors[i]]]))))
         res_df = data.frame(pval=as.vector(sapply(sapply(res,"[",i=5),"[",i=1)),
                             adj_pval=p.adjust(as.vector(sapply(sapply(res,"[",i=5),"[",i=1)),method = "fdr"),
-                            fold_change=coeff[2,])
+                            dm=coeff[2,])
         metadata(met)[[paste0("anova_",group_factors[i],"_",paste(xlevels,collapse = "_vs_"))]] = res_df
         } else {
         xlev = levels(as.factor(colData(met)[[group_factors[i]]]))
@@ -27,7 +27,7 @@ diff_test <- function(met, group_factors) {
         res_df = data.frame(metabolite=rownames(df),
                             pval=df$p.value,
                             adj_pval=p.adjust(df$p.value,method="fdr"),
-                            fold_change=df$dm)
+                            dm=df$dm)
         metadata(met)[[paste0("ttest_",group_factors[i],"_",xlev[2],"_vs_",xlev[1])]] = res_df
         }
     }

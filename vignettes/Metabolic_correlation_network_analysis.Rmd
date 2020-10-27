@@ -162,7 +162,7 @@ Assessing the module significance for different sample traits facilitates an und
 K^q = |cor(x_i,E^q)|
 \end{equation}
 
-where $x_i$ is the profile of metabolite $i$ and $E^q$ is the eigenmetabolite of module $q$. Based on this definition, $K$ describes how closely related metabolite $i$ is to module $q$. A meaningful visualization is consequently plotting the module membership over the p-value of the respective $MetS$ measure (`MOI_plot`). As a third dimension, the color is scaled according to the effect size (i.e. fold-change). 
+where $x_i$ is the profile of metabolite $i$ and $E^q$ is the eigenmetabolite of module $q$. Based on this definition, $K$ describes how closely related metabolite $i$ is to module $q$. A meaningful visualization is consequently plotting the module membership over the p-value of the respective $MetS$ measure (`MOI_plot`). As a third dimension, the color is scaled according to the effect size (i.e. difference in means). 
 
 ```{r MOIplot, fig.cap="Association of individual metabolites within module 2. Myo-inositol is most tightly linked to the module (e.g. eigenmetabolite).",message=FALSE, warning=FALSE}
 MOI_plot(met_example,

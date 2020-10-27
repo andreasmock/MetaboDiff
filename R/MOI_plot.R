@@ -13,7 +13,7 @@ MOI_plot = function(met, group_factor, MOI, label_colors, p_adjust=TRUE, ...){
     if(p_adjust==TRUE){
         x = -log10(metadata(met)[[id]]$adj_pval[metadata(met)$modules==MOI])
         y =  metadata(met)$MM[,MOI+1][metadata(met)$modules==MOI]
-        fc = metadata(met)[[id]]$fold_change[metadata(met)$modules==MOI]
+        fc = metadata(met)[[id]]$dm[metadata(met)$modules==MOI]
         df = data.frame(mets=mets,x=x,y=y,fc=fc)
         ggplot(df, aes(x=x,y=y,color=fc)) +
             geom_point() +
@@ -29,7 +29,7 @@ MOI_plot = function(met, group_factor, MOI, label_colors, p_adjust=TRUE, ...){
     } else {
         x = -log10(metadata(met)[[id]]$pval[metadata(met)$modules==MOI])
         y =  metadata(met)$MM[,MOI+1][metadata(met)$modules==MOI]
-        fc = metadata(met)[[id]]$fold_change[metadata(met)$modules==MOI]
+        fc = metadata(met)[[id]]$dm[metadata(met)$modules==MOI]
         df = data.frame(mets=mets,x=x,y=y,fc=fc)
         ggplot(df, aes(x=x,y=y,color=fc)) +
             geom_point() +

@@ -205,28 +205,30 @@ The results of the hypothesis testing is saved in the metadata slot of the `Mult
 str(metadata(met), max.level=2)
 ```
 
-The name of the corresponding slot comprises the name of the group_factor (e.g. tumor_normal), as well as the factor levels of the grouping (N_vs_T). Here, the first factor is always the reference for the fold-change calculation. A positive fold-change in the grouping T_vs_N is hence a higher abundance in the normal (N) group.
+The name of the corresponding slot comprises the name of the group_factor (e.g. tumor_normal), as well as the factor levels of the grouping (N_vs_T). Here, the first factor is always the reference for the difference in means (dm) calculation. A positive difference in means in the grouping T_vs_N is hence a higher abundance in the normal (N) group.
 
 The columns of the result dataframe are the unadjusted p-value (pval), the adjusted p-value by Benjaminni-Hochberg procedure (adj_pval) and
-the fold-change between groups (fold_change).
+the difference in means between groups.
 
-The comparative analysis can be visualized by means of a volcano plot (figure \@ref(fig:volcano1)). The option `p_adjust` enables to choose if the p-value cutoff counts for unadjusted or adjusted p-values.
+The comparative analysis can be visualized by means of a volcano plot (figure \@ref(fig:volcano1)). The option `p_adjust` enables to choose if the p-value cutoff counts for unadjusted or adjusted p-values. The argument `dm_cutoff` sets the cutoff for the absolute difference in means.
 
-```{r volcano1, fig.cap="Volcano plot of comparison tumor vs normal. The dashed lines mark the significance thresholds adjusted p-value<0.05 and fold-change>1.5. Significant metabolites are colored. The right plot displays p-values adjusted for muliple testing by the Bejamini-Hochberg procedure.", fig.wide=TRUE}
+```{r volcano1, fig.cap="Volcano plot of comparison tumor vs normal. The dashed lines mark the significance thresholds adjusted p-value<0.05 and an absolute dm>0.5. Significant metabolites are colored. The right plot displays p-values adjusted for muliple testing by the Bejamini-Hochberg procedure.", fig.wide=TRUE}
 par(mfrow=c(1,2))
 volcano_plot(met, 
              group_factor="tumor_normal",
              label_colors=c("darkseagreen","dodgerblue"),
+             dm_cutoff=0.5,
              p_adjust = FALSE)
 volcano_plot(met, 
              group_factor="tumor_normal",
              label_colors=c("darkseagreen","dodgerblue"),
+             dm_cutoff=0.5,
              p_adjust = TRUE)
 ```
 
 As a sanity check, we also display the volcano plot for the random grouping "random_gender" for which we do not expect the same number of significant metabolites.
 
-```{r volcano2, fig.cap="Volcano plot of random comparison. The dashed lines mark the significance thresholds adjusted p-value<0.05 and fold-change>1.5. The right plot displays p-values adjusted for muliple testing by the Bejamini-Hochberg procedure.", fig.wide=TRUE}
+```{r volcano2, fig.cap="Volcano plot of random comparison. The dashed lines mark the significance thresholds adjusted p-value<0.05 an absolute dm>1.5. The right plot displays p-values adjusted for muliple testing by the Bejamini-Hochberg procedure.", fig.wide=TRUE}
 par(mfrow=c(1,2))
 volcano_plot(met, 
              group_factor="random_gender",
